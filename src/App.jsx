@@ -1,120 +1,118 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [role, setRole] = useState('cashier')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleLogin(e) {
+    e.preventDefault()
+    setError('')
+
+    if (role === 'customer') {
+      alert('Customer view coming soon!')
+      return
+    }
+
+    if (!username || !password) {
+      setError('Username and password are required.')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Login failed.')
+        return
+      }
+
+      if (data.role !== role) {
+        setError(`Your account is registered as "${data.role}", not "${role}".`)
+        return
+      }
+
+      alert(`Logged in as ${data.username} (${data.role}). Views coming in a future phase!`)
+    } catch {
+      setError('Could not reach server.')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="login-page">
+      <div className="login-card">
+        <h1 className="login-title">Austin's Boba Shop</h1>
+        <p className="login-subtitle">User Login</p>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="role-selector">
+          {['manager', 'cashier', 'customer'].map((r) => (
+            <button
+              key={r}
+              className={`role-btn ${role === r ? 'active' : ''}`}
+              onClick={() => { setRole(r); setError('') }}
+              type="button"
+            >
+              {r.charAt(0).toUpperCase() + r.slice(1)}
+            </button>
+          ))}
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        <form onSubmit={handleLogin} className="login-form">
+          {role !== 'customer' ? (
+            <>
+              <div className="field">
+                <label htmlFor="username">Username</label>
+                <input
+                  id="username"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
+                  autoComplete="username"
+                />
+              </div>
+
+              <div className="field">
+                <label htmlFor="password">Password</label>
+                <input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  autoComplete="current-password"
+                />
+              </div>
+            </>
+          ) : (
+            <p className="customer-note">
+              No login required. Continue as a customer to browse the menu and place an order.
+            </p>
+          )}
+
+          {error && <p className="error-msg">{error}</p>}
+
+          <button className="login-btn" type="submit" disabled={loading}>
+            {loading ? 'Signing in...' :
+              role === 'customer' ? 'Continue as Customer' : 'Sign In'}
+          </button>
+        </form>
+      </div>
+    </div>
   )
 }
 
