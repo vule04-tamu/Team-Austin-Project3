@@ -1,6 +1,10 @@
 import os
 import psycopg2
 from contextlib import contextmanager
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def _get_conn_params():
     return {
