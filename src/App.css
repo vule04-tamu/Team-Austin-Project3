@@ -1,3 +1,6 @@
+/* Container that centers the login card both vertically and horizontally 
+   Occupies at least 100% of the dynamic viewport height */
+   
 .login-page {
   min-height: 100svh;
   display: flex;
@@ -7,6 +10,8 @@
   background: var(--bg);
 }
 
+/* The main content box with a defined max-width, 
+   featuring a border, padding, and subtle shadow for depth */
 .login-card {
   width: 100%;
   max-width: 420px;
@@ -18,18 +23,21 @@
   text-align: center;
 }
 
+/* Primary heading for the login screen (e.g., "Welcome Back") */
 .login-title {
   font-size: 32px;
   margin: 0 0 4px;
   letter-spacing: -0.5px;
 }
 
+/* Secondary text/description appearing below the title */
 .login-subtitle {
   margin: 0 0 28px;
   color: var(--text);
   font-size: 15px;
 }
 
+/* Individual buttons within the role selector */
 .role-selector {
   display: flex;
   gap: 0;
@@ -59,12 +67,14 @@
   background: var(--accent-bg);
 }
 
+/* Highlights the currently selected user role */
 .role-btn.active {
   background: var(--accent);
   color: #fff;
   font-weight: 600;
 }
 
+/* Vertical stack for input fields and labels with consistent spacing */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -84,6 +94,7 @@
   color: var(--text-h);
 }
 
+/* Styled text input fields with smooth focus transitions */
 .field input {
   padding: 10px 12px;
   border: 1px solid var(--border);
@@ -101,6 +112,7 @@
   box-shadow: 0 0 0 2px var(--accent-bg);
 }
 
+/* Small help text or notice specifically for customer accounts */
 .customer-note {
   text-align: center;
   color: var(--text);
@@ -109,6 +121,7 @@
   margin: 0;
 }
 
+/* Feedback message styled with a soft red background for validation errors */
 .error-msg {
   margin: 0;
   padding: 10px 12px;
@@ -136,6 +149,7 @@
   opacity: 0.9;
 }
 
+/* Visual state for when the form is submitting or invalid */
 .login-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
