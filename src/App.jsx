@@ -56,7 +56,7 @@ function App() {
     <div className="login-page">
       <div className="login-card">
         <h1 className="login-title">Austin's Boba Shop</h1>
-        <p className="login-subtitle">User Login</p>
+        <p className="login-subtitle">Welcome</p>
 
         <div className="role-selector">
           {['manager', 'cashier', 'customer'].map((r) => (
