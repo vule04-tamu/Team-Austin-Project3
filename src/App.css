@@ -12,6 +12,7 @@
 
 /* The main content box with a defined max-width, 
    featuring a border, padding, and subtle shadow for depth */
+/* This card serves as the central focus for the login interface, containing all related elements */
 .login-card {
   width: 100%;
   max-width: 420px;
@@ -24,6 +25,7 @@
 }
 
 /* Primary heading for the login screen (e.g., "Welcome Back") */
+/* Login screen should hold passwords for cashier and manager, but the default page should be customer */
 .login-title {
   font-size: 32px;
   margin: 0 0 4px;
@@ -132,6 +134,7 @@
   text-align: center;
 }
 
+/* Primary action button for submitting the login form */
 .login-btn {
   padding: 12px;
   border: none;
@@ -145,6 +148,7 @@
   transition: opacity 0.15s;
 }
 
+/* Changes state of login button on hover for better interactivity feedback */
 .login-btn:hover {
   opacity: 0.9;
 }
