@@ -11,8 +11,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/menu" element={<Menu />} />
-        <Route path="/cashier-view" element={<CashierView />}/>
-        <Route path="/manager-view" element={<ManagerView />}/>
+        <Route path="/cashier" element={<CashierView />}/>
+        <Route path="/manager" element={<ManagerView />}/>
       </Routes>
     </Router>
   )
