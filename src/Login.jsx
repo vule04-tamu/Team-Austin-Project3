@@ -21,6 +21,11 @@ function Login() {
       return
     }
 
+    if (role == 'cashier') {
+      navigate('/cashier')
+      return
+    }
+
     if (!username || !password) {
       setError('Username and password are required.')
       return
@@ -46,7 +51,7 @@ function Login() {
         return
       }
 
-      alert(`Logged in as ${data.username} (${data.role}). Views coming in a future phase!`)
+      // alert(`Logged in as ${data.username} (${data.role}). Views coming in a future phase!`)
     } catch {
       setError('Could not reach server.')
     } finally {
