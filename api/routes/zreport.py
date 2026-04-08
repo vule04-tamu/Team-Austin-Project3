@@ -65,6 +65,19 @@ def check_already_run():
 
     return jsonify({"alreadyRun": already_run})
 
+@zreport_bp.route("/clear-report", methods=["POST"])
+def clear_z_report():
+    with get_connection() as conn:
+        cur = conn.cursor()
+        try:
+            cur.execute("TRUNCATE TABLE z_report_log")
+            conn.commit()
+            return jsonify({"success": True})
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            cur.close()
 
 @zreport_bp.route("/run", methods=["POST"])
 def run_zreport():

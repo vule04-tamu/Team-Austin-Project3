@@ -446,6 +446,19 @@ export default function ManagerView() {
         );
     };
 
+    const handleClearZReport = async () => {
+        await withAction(
+            "clear-report",
+            async () => {
+                await apiRequest("/api/zreport/clear-report", {
+                    method: "POST",
+                });
+                await refreshAll();
+            },
+            "Cleared Z-Report.",
+        );
+    };
+
     if (loading) {
         return (
             <div className="manager-root">
@@ -535,6 +548,14 @@ export default function ManagerView() {
                                     onClick={handleRunZReport}
                                 >
                                     {actionBusy === "z-run" ? "Running..." : "Run Z-Report"}
+                                </button>
+                                <button
+                                    className="primary-btn"
+                                    type="button"
+                                    disabled={actionBusy === "clear-report"}
+                                    onClick={handleClearZReport}
+                                >
+                                    {actionBusy === "clear-report" ? "Clearing..." : "Refresh Z-Report"}
                                 </button>
                             </div>
                             <div className="split-list">
