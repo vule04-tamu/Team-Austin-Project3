@@ -91,7 +91,6 @@ export default function ManagerView() {
             inventoryLowToHigh,
             employeeRows,
             orders,
-            zToday,
             zCheck,
         ] = await Promise.all([
             apiRequest("/api/menu"),
@@ -99,7 +98,6 @@ export default function ManagerView() {
             apiRequest("/api/inventory/report"),
             apiRequest("/api/employees"),
             apiRequest("/api/orders/recent?limit=25"),
-            apiRequest("/api/zreport/today"),
             apiRequest("/api/zreport/check"),
         ]);
 
@@ -108,7 +106,6 @@ export default function ManagerView() {
         setInventoryReport(inventoryLowToHigh);
         setEmployees(employeeRows);
         setRecentOrders(orders);
-        setZTotals(zToday);
         setZAlreadyRun(Boolean(zCheck?.alreadyRun));
 
         setMenuPriceEdits(
@@ -436,10 +433,12 @@ export default function ManagerView() {
         await withAction(
             "z-run",
             async () => {
-                await apiRequest("/api/zreport/run", {
+                const data = await apiRequest("/api/zreport/run", {
                     method: "POST",
                     body: JSON.stringify({ runByUser: "manager-ui" }),
                 });
+                setZTotals(data.snapshot);
+                setZAlreadyRun(true);
                 await refreshAll();
             },
             "Z-Report complete.",
