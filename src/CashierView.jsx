@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from 'react-router-dom'
 import "./CashierView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -21,6 +22,7 @@ const itemColor = (id) => ITEM_COLORS[id % ITEM_COLORS.length];
 const TAX_RATE = 0.0825;
 
 export default function CashierView() {
+    const navigate = useNavigate()
     const [menuItems, setMenuItems] = useState([]);
     const [categories, setCategories] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
@@ -283,7 +285,9 @@ export default function CashierView() {
                             </button>
                         ))}
                     </div>
-                    <span className="toolbar-custom-label">CUSTOM</span>
+                    <button className="toolbar-custom-label logout-btn" onClick={() => navigate('/')} type="button">
+                        LOGOUT
+                    </button>
                 </div>
 
                 <div className="menu-grid-area">
