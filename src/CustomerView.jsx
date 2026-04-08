@@ -37,7 +37,7 @@ const SECTIONS = [
         key: "specialties",
         label: "Specialties & Other Drinks",
         gradient: "#ffd166, #ff9f1c",
-        names: ["Matcha Latte", "Matcha Dreamcicle", "Jayden Special", "Fresh Milk"],
+        names: ["Matcha Latte", "Matcha Dreamcicle", "jayden special", "Fresh Milk"],
     },
     {
         key: "toppings",
