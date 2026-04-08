@@ -69,12 +69,6 @@
     color: #12756a;
 }
 
-.manager-sidebar-footer {
-    margin-top: auto;
-    border-top: 2px solid #f0ede8;
-    padding: 14px 10px;
-}
-
 .manager-main {
     flex: 1;
     display: flex;

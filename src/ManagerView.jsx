@@ -497,11 +497,6 @@ export default function ManagerView() {
                         </button>
                     ))}
                 </nav>
-                <div className="manager-sidebar-footer">
-                    <button className="ghost-btn" type="button" onClick={() => navigate("/")}>
-                        Logout
-                    </button>
-                </div>
             </aside>
 
             <main className="manager-main">
