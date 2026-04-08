@@ -17,7 +17,6 @@ function Login() {
     setError('')
 
     if (role === 'customer') {
-      navigate('/menu')
       return
     }
 
@@ -105,9 +104,16 @@ function Login() {
               </div>
             </>
           ) : (
-            <p className="customer-note">
-              No login required. Continue as a customer to browse the menu and place an order.
-            </p>
+            <>
+              <p className="customer-note">
+                Welcome<br />
+                View the menu or continue as a customer to place an order
+              </p>
+              
+              <button type="button" className="login-btn menu-view-btn" onClick={() => navigate('/menu')}>
+                View Menu
+              </button>
+            </>
           )}
 
           {error && <p className="error-msg">{error}</p>}
