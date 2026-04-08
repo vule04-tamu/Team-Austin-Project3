@@ -1,0 +1,904 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap");
+
+/* root */
+:root {
+    --boba-pink: #ff6b9d;
+    --boba-purple: #c77dff;
+    --boba-teal: #06d6a0;
+    --boba-yellow: #ffd166;
+    --boba-orange: #ff9f1c;
+    --boba-blue: #4cc9f0;
+    --boba-dark: #1a0a2e;
+    --boba-surface: #ffffff;
+    --boba-surface2: #f8f4ff;
+    --boba-text: #1a0a2e;
+    --boba-muted: #7c6f9e;
+    --card-radius: 20px;
+    --pill-radius: 100px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.kiosk-root {
+    min-height: 100svh;
+    width: 100vw;
+    background: linear-gradient(135deg, #1a0a2e 0%, #2d1057 40%, #1a0a2e 100%);
+    font-family: "Nunito", sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* floating blobs */
+.kiosk-root::before,
+.kiosk-root::after {
+    content: "";
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+}
+.kiosk-root::before {
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(199, 125, 255, 0.25), transparent 70%);
+    top: -150px;
+    right: -100px;
+}
+.kiosk-root::after {
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(6, 214, 160, 0.18), transparent 70%);
+    bottom: -100px;
+    left: -80px;
+}
+
+/* Header */
+.kiosk-header {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+}
+
+.kiosk-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.kiosk-brand-icon {
+    font-size: 36px;
+    animation: wobble 3s ease-in-out infinite;
+}
+
+@keyframes wobble {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+}
+
+.kiosk-brand-name {
+    font-family: "Fredoka One", cursive;
+    font-size: 26px;
+    color: #fff;
+    letter-spacing: 0.5px;
+    line-height: 1;
+}
+
+.kiosk-brand-sub {
+    font-size: 11px;
+    color: var(--boba-purple);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.kiosk-header-right {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.kiosk-cart-btn {
+    position: relative;
+    background: linear-gradient(135deg, var(--boba-pink), var(--boba-purple));
+    border: none;
+    border-radius: var(--pill-radius);
+    padding: 10px 20px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 20px rgba(255, 107, 157, 0.45);
+}
+
+.kiosk-cart-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 28px rgba(255, 107, 157, 0.55);
+}
+
+.cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--boba-yellow);
+    color: var(--boba-dark);
+    font-size: 11px;
+    font-weight: 900;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--boba-dark);
+    animation: pop 0.3s ease;
+}
+
+@keyframes pop {
+    0% { transform: scale(0.5); }
+    70% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+.kiosk-back-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--pill-radius);
+    padding: 9px 18px;
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.18s;
+}
+
+.kiosk-back-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+/* Hero Banner  */
+.kiosk-hero {
+    position: relative;
+    z-index: 5;
+    padding: 20px 28px 10px;
+    flex-shrink: 0;
+}
+
+.kiosk-hero h1 {
+    font-family: "Fredoka One", cursive;
+    font-size: clamp(28px, 4vw, 42px);
+    color: #fff;
+    margin: 0 0 4px;
+    letter-spacing: 0.5px;
+}
+
+.kiosk-hero p {
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.55);
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Category Pills  */
+.kiosk-categories {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    gap: 10px;
+    padding: 14px 28px;
+    overflow-x: auto;
+    flex-shrink: 0;
+    scrollbar-width: none;
+}
+
+.kiosk-categories::-webkit-scrollbar {
+    display: none;
+}
+
+.cat-pill {
+    flex-shrink: 0;
+    padding: 9px 20px;
+    border-radius: var(--pill-radius);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.07);
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+.cat-pill:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.cat-pill.active {
+    background: linear-gradient(135deg, var(--boba-pink), var(--boba-purple));
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(199, 125, 255, 0.45);
+}
+
+.cat-pill-icon {
+    font-size: 16px;
+}
+
+/* Main Layout */
+.kiosk-body {
+    position: relative;
+    z-index: 5;
+    display: flex;
+    flex: 1;
+    gap: 20px;
+    padding: 0 28px 28px;
+    overflow: hidden;
+    min-height: 0;
+}
+
+/* Menu Grid */
+.kiosk-menu {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.kiosk-menu::-webkit-scrollbar {
+    width: 5px;
+}
+.kiosk-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.kiosk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* Menu Card */
+.kiosk-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--card-radius);
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    border: 2px solid transparent;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.kiosk-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.kiosk-card:active {
+    transform: translateY(-2px) scale(1.01);
+}
+
+.kiosk-card-banner {
+    height: 10px;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.kiosk-card-body {
+    padding: 16px 16px 14px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.kiosk-card-emoji {
+    font-size: 36px;
+    margin-bottom: 10px;
+    line-height: 1;
+    display: block;
+}
+
+.kiosk-card-name {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--boba-dark);
+    line-height: 1.3;
+    margin-bottom: 6px;
+    flex: 1;
+}
+
+.kiosk-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.kiosk-card-price {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--boba-dark);
+    font-family: "Fredoka One", cursive;
+}
+
+.kiosk-card-add {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    cursor: pointer;
+    transition: transform 0.18s ease;
+    line-height: 1;
+}
+
+.kiosk-card:hover .kiosk-card-add {
+    transform: scale(1.15) rotate(10deg);
+}
+
+.kiosk-card-tag {
+    position: absolute;
+    top: 18px;
+    right: -2px;
+    background: var(--boba-yellow);
+    color: var(--boba-dark);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 10px 3px 8px;
+    border-radius: 4px 0 0 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Cart Panel */
+.kiosk-cart {
+    width: 320px;
+    min-width: 280px;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    overflow: hidden;
+    flex-shrink: 0;
+    max-height: 100%;
+}
+
+.kiosk-cart-header {
+    padding: 20px 22px 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.kiosk-cart-title {
+    font-family: "Fredoka One", cursive;
+    font-size: 22px;
+    color: #fff;
+    margin: 0;
+}
+
+.kiosk-cart-count {
+    background: linear-gradient(135deg, var(--boba-pink), var(--boba-purple));
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 20px;
+    padding: 3px 12px;
+}
+
+.kiosk-cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.kiosk-cart-items::-webkit-scrollbar {
+    width: 4px;
+}
+
+.kiosk-cart-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 140px;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.kiosk-cart-empty-icon {
+    font-size: 48px;
+    opacity: 0.4;
+}
+
+.kiosk-cart-empty p {
+    font-size: 13px;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.kiosk-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    transition: background 0.12s;
+}
+
+.kiosk-cart-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.kiosk-cart-item-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.kiosk-cart-item-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.kiosk-cart-item-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.kiosk-cart-item-price {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.kiosk-cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.kiosk-qty-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.kiosk-qty-btn:hover {
+    background: var(--boba-pink);
+    border-color: var(--boba-pink);
+}
+
+.kiosk-qty-num {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    min-width: 18px;
+    text-align: center;
+    font-family: "Fredoka One", cursive;
+}
+
+/* Cart Totals */
+.kiosk-cart-totals {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px 20px 0;
+    flex-shrink: 0;
+}
+
+.kiosk-totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+}
+
+.kiosk-totals-label {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 600;
+}
+
+.kiosk-totals-val {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 700;
+}
+
+.kiosk-totals-divider {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    margin: 10px 0;
+}
+
+.kiosk-totals-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0 18px;
+}
+
+.kiosk-totals-total-label {
+    font-family: "Fredoka One", cursive;
+    font-size: 20px;
+    color: #fff;
+}
+
+.kiosk-totals-total-val {
+    font-family: "Fredoka One", cursive;
+    font-size: 26px;
+    color: var(--boba-teal);
+}
+
+/* Order Button */
+.kiosk-order-btn {
+    margin: 0 16px 20px;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--boba-teal) 0%, #04a57a 100%);
+    font-family: "Fredoka One", cursive;
+    font-size: 20px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 6px 24px rgba(6, 214, 160, 0.4);
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+.kiosk-order-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(6, 214, 160, 0.55);
+}
+
+.kiosk-order-btn:active {
+    transform: translateY(0);
+}
+
+.kiosk-order-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Loading */
+.kiosk-loading {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.kiosk-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-top-color: var(--boba-pink);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Payment Modal */
+.kiosk-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 5, 25, 0.75);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.kiosk-modal {
+    background: #fff;
+    border-radius: 28px;
+    padding: 36px;
+    width: 440px;
+    max-width: 92vw;
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.22s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.kiosk-modal::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--boba-pink), var(--boba-purple), var(--boba-teal));
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.kiosk-modal-title {
+    font-family: "Fredoka One", cursive;
+    font-size: 28px;
+    color: var(--boba-dark);
+    margin: 0 0 4px;
+}
+
+.kiosk-modal-total {
+    font-family: "Fredoka One", cursive;
+    font-size: 40px;
+    color: var(--boba-pink);
+    margin: 0 0 28px;
+    line-height: 1;
+}
+
+.kiosk-modal-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--boba-muted);
+    margin-bottom: 12px;
+}
+
+.kiosk-pay-methods {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 28px;
+}
+
+.kiosk-pay-btn {
+    flex: 1;
+    padding: 16px 8px;
+    border: 2.5px solid #e8e0f0;
+    border-radius: 16px;
+    background: var(--boba-surface2);
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--boba-muted);
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.kiosk-pay-btn:hover {
+    border-color: var(--boba-purple);
+    color: var(--boba-purple);
+}
+
+.kiosk-pay-btn.active {
+    border-color: var(--boba-pink);
+    background: #fff0f6;
+    color: var(--boba-pink);
+    box-shadow: 0 4px 16px rgba(255, 107, 157, 0.25);
+}
+
+.kiosk-pay-btn .pay-icon {
+    font-size: 24px;
+}
+
+.kiosk-modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.kiosk-modal-cancel {
+    flex: 1;
+    padding: 14px;
+    border: 2px solid #e2ddd6;
+    background: #fff;
+    border-radius: 14px;
+    font-family: "Nunito", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: #9e9aa8;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.kiosk-modal-cancel:hover {
+    border-color: #ccc;
+    color: #666;
+}
+
+.kiosk-modal-confirm {
+    flex: 2;
+    padding: 14px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--boba-pink) 0%, var(--boba-purple) 100%);
+    font-family: "Fredoka One", cursive;
+    font-size: 18px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 6px 20px rgba(255, 107, 157, 0.4);
+}
+
+.kiosk-modal-confirm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(255, 107, 157, 0.55);
+}
+
+.kiosk-modal-confirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Success Screen */
+.kiosk-success {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    position: relative;
+    z-index: 5;
+    padding: 40px;
+    text-align: center;
+}
+
+.kiosk-success-icon {
+    font-size: 96px;
+    animation: bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes bounce {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.kiosk-success h2 {
+    font-family: "Fredoka One", cursive;
+    font-size: 40px;
+    color: var(--boba-teal);
+    margin: 0;
+}
+
+.kiosk-success p {
+    font-size: 17px;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    font-weight: 600;
+}
+
+.kiosk-success-order {
+    font-family: "Fredoka One", cursive;
+    font-size: 22px;
+    color: var(--boba-yellow);
+    background: rgba(255, 209, 102, 0.12);
+    border: 2px solid rgba(255, 209, 102, 0.3);
+    border-radius: 16px;
+    padding: 14px 40px;
+}
+
+.kiosk-new-order-btn {
+    margin-top: 10px;
+    padding: 16px 40px;
+    border: none;
+    border-radius: var(--pill-radius);
+    background: linear-gradient(135deg, var(--boba-pink), var(--boba-purple));
+    font-family: "Fredoka One", cursive;
+    font-size: 20px;
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 6px 24px rgba(255, 107, 157, 0.4);
+}
+
+.kiosk-new-order-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 32px rgba(255, 107, 157, 0.55);
+}
+
+/* Toast */
+.kiosk-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 10, 46, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #fff;
+    padding: 13px 28px;
+    border-radius: var(--pill-radius);
+    font-size: 14px;
+    font-weight: 700;
+    z-index: 200;
+    backdrop-filter: blur(10px);
+    animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
+    white-space: nowrap;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(14px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
