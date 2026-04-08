@@ -3,61 +3,8 @@ import { useNavigate } from "react-router-dom";
 import "./CustomerView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
-const TAX_RATE = 0.0825;
 
-// Static menu sections 
-const MENU_SECTIONS = [
-    {
-        key: "milk-teas",
-        label: "Milk Teas",
-        emoji: "🧋",
-        gradient: "#ff6b9d, #c77dff",
-        items: [
-            "Classic Milk Tea",
-            "Jasmine Green Milk Tea",
-            "Taro Milk Tea",
-            "Thai Milk Tea",
-            "Honey Milk Tea",
-            "Brown Sugar Milk Tea",
-            "Strawberry Milk Tea",
-            "Wintermelon Milk Tea",
-            "Coffee Milk Tea",
-            "Coconut Milk Tea",
-            "Chocolate Milk Tea",
-            "Oreo Milk Tea",
-            "March Milk Tea",
-        ],
-    },
-    {
-        key: "fruit-teas",
-        label: "Fruit, Green, & Oolong Teas",
-        emoji: "🍵",
-        gradient: "#06d6a0, #4cc9f0",
-        items: [
-            "Mango Green Tea",
-            "Passion Fruit Tea",
-            "Lychee Green Tea",
-            "Peach Oolong Tea",
-            "Wintermelon Tea",
-            "Honey Lemon Tea",
-            "Mint Tea",
-        ],
-    },
-    {
-        key: "specialties",
-        label: "Specialties & Other Drinks",
-        emoji: "✨",
-        gradient: "#ffd166, #ff9f1c",
-        items: ["Matcha Latte", "Matcha Dreamcicle", "Jayden Special", "Fresh Milk"],
-    },
-    {
-        key: "toppings",
-        label: "Toppings / Add-ons",
-        emoji: "🍮",
-        gradient: "#ff9f1c, #ef233c",
-        items: ["Boba Pearls", "Lychee Jelly"],
-    },
-];
+const TAX_RATE = 0.0825;
 
 const CARD_COLORS = [
     "#ff6b9d","#c77dff","#06d6a0","#ffd166",
@@ -65,10 +12,48 @@ const CARD_COLORS = [
 ];
 const ITEM_EMOJIS = ["🧋","🍵","🥤","🍹","🧃","🍶","🫖","🍧","🍨","🧊"];
 
-const cardColor  = (id) => CARD_COLORS[id % CARD_COLORS.length];
-const itemEmoji  = (id) => ITEM_EMOJIS[id % ITEM_EMOJIS.length];
+const cardColor = (id) => CARD_COLORS[id % CARD_COLORS.length];
+const itemEmoji = (id) => ITEM_EMOJIS[id % ITEM_EMOJIS.length];
 
-// Ice / Sugar options
+// Section definitions — just for display grouping
+const SECTIONS = [
+    {
+        key: "milk-teas",
+        label: "Milk Teas",
+        emoji: "🧋",
+        gradient: "#ff6b9d, #c77dff",
+        names: [
+            "Classic Milk Tea","Jasmine Green Milk Tea","Taro Milk Tea","Thai Milk Tea",
+            "Honey Milk Tea","Brown Sugar Milk Tea","Strawberry Milk Tea","Wintermelon Milk Tea",
+            "Coffee Milk Tea","Coconut Milk Tea","Chocolate Milk Tea","Oreo Milk Tea","March Milk Tea",
+        ],
+    },
+    {
+        key: "fruit-teas",
+        label: "Fruit, Green, & Oolong Teas",
+        emoji: "🍵",
+        gradient: "#06d6a0, #4cc9f0",
+        names: [
+            "Mango Green Tea","Passion Fruit Tea","Lychee Green Tea","Peach Oolong Tea",
+            "Wintermelon Tea","Honey Lemon Tea","Mint Tea",
+        ],
+    },
+    {
+        key: "specialties",
+        label: "Specialties & Other Drinks",
+        emoji: "✨",
+        gradient: "#ffd166, #ff9f1c",
+        names: ["Matcha Latte","Matcha Dreamcicle","Jayden Special","Fresh Milk"],
+    },
+    {
+        key: "toppings",
+        label: "Toppings / Add-ons",
+        emoji: "🍮",
+        gradient: "#ff9f1c, #ef233c",
+        names: ["Boba Pearls","Lychee Jelly"],
+    },
+];
+
 const ICE_OPTIONS   = ["No Ice", "Light Ice"];
 const SUGAR_OPTIONS = ["No Sugar", "Light Sugar", "Extra Sugar"];
 
@@ -87,11 +72,10 @@ export default function CustomerView() {
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [orderNumber, setOrderNumber]   = useState(null);
 
-    // Ice / Sugar customization (single selection each, null = default/normal)
     const [selectedIce,   setSelectedIce]   = useState(null);
     const [selectedSugar, setSelectedSugar] = useState(null);
 
-    // Fetch menu
+    // ── Fetch menu (exactly as original) ─────────────────────────────────────
     useEffect(() => {
         (async () => {
             try {
@@ -112,7 +96,7 @@ export default function CustomerView() {
         setTimeout(() => setToast(null), 2800);
     }, []);
 
-    // Cart helpers 
+    // ── Cart helpers (exactly as original) ───────────────────────────────────
     const addToCart = (item) => {
         setCart((prev) => {
             const existing = prev.find((c) => c.id === item.id);
@@ -129,14 +113,14 @@ export default function CustomerView() {
         );
     };
 
-    // Totals
+    // ── Totals (exactly as original) ─────────────────────────────────────────
     const totalItems = cart.reduce((s, c) => s + c.qty, 0);
     const subtotal   = cart.reduce((s, c) => s + c.price * c.qty, 0);
     const tax        = subtotal * TAX_RATE;
     const total      = subtotal + tax;
     const fmt        = (n) => `$${n.toFixed(2)}`;
 
-    // Submit order
+    // ── Submit order ──────────────────────────────────────────────────────────
     const handlePay = async () => {
         setPaying(true);
         try {
@@ -164,10 +148,17 @@ export default function CustomerView() {
         }
     };
 
-    //  Helpers: resolve a menu item from API data by name 
-    const getItemByName = (name) => menuItems.find((m) => m.name === name);
+    // ── Group API items into sections by name ─────────────────────────────────
+    const grouped = SECTIONS.map((section) => ({
+        ...section,
+        items: menuItems.filter((item) => section.names.includes(item.name)),
+    }));
+    // Any API items that don't match a section still show up under "Other"
+    const ungrouped = menuItems.filter(
+        (item) => !SECTIONS.some((s) => s.names.includes(item.name))
+    );
 
-    // Loading / Error 
+    // ── Loading / Error ───────────────────────────────────────────────────────
     if (loading) return (
         <div className="kiosk-root">
             <div className="kiosk-loading">
@@ -183,7 +174,6 @@ export default function CustomerView() {
         </div>
     );
 
-    // Order success
     if (orderSuccess) return (
         <div className="kiosk-root">
             <div className="kiosk-success">
@@ -200,7 +190,7 @@ export default function CustomerView() {
 
     return (
         <div className="kiosk-root">
-            {/* Header */}
+            {/* ── Header ── */}
             <header className="kiosk-header">
                 <div className="kiosk-brand">
                     <span className="kiosk-brand-icon">🧋</span>
@@ -221,76 +211,98 @@ export default function CustomerView() {
                 </div>
             </header>
 
-            {/* Hero */}
+            {/* ── Hero ── */}
             <div className="kiosk-hero">
                 <h1>What are you craving? 🤩</h1>
                 <p>Tap any drink to add it to your order</p>
             </div>
 
-            {/*  Body: Sections + Cart  */}
+            {/* ── Body ── */}
             <div className="kiosk-body">
-                {/* Menu Sections */}
                 <div className="kiosk-menu">
-                    {MENU_SECTIONS.map((section) => (
-                        <div key={section.key} className="kiosk-section">
-                            {/* Section heading */}
-                            <div className="kiosk-section-heading">
-                                <span className="kiosk-section-emoji">{section.emoji}</span>
-                                <h2
-                                    className="kiosk-section-title"
-                                    style={{ backgroundImage: `linear-gradient(135deg, ${section.gradient})` }}
-                                >
-                                    {section.label}
-                                </h2>
-                            </div>
 
-                            {/* Cards */}
-                            <div className="kiosk-grid">
-                                {section.items.map((name, idx) => {
-                                    const apiItem = getItemByName(name);
-                                    // Use API data if available, otherwise display as unavailable
-                                    const color   = cardColor(idx);
-                                    const inCart  = apiItem ? cart.find((c) => c.id === apiItem.id) : null;
-
-                                    return (
-                                        <div
-                                            key={name}
-                                            className={`kiosk-card ${!apiItem ? "kiosk-card--unavailable" : ""}`}
-                                            onClick={() => apiItem && addToCart(apiItem)}
-                                        >
-                                            <div className="kiosk-card-banner" style={{ background: color }} />
-                                            <div className="kiosk-card-body">
-                                                <span className="kiosk-card-emoji">{itemEmoji(idx)}</span>
-                                                <div className="kiosk-card-name">{name}</div>
-                                                <div className="kiosk-card-footer">
-                                                    <span className="kiosk-card-price">
-                                                        {apiItem ? fmt(apiItem.price) : "—"}
-                                                    </span>
-                                                    {apiItem && (
+                    {/* Named sections — only renders if the API returned items for that section */}
+                    {grouped.map((section) => {
+                        if (section.items.length === 0) return null;
+                        return (
+                            <div key={section.key} className="kiosk-section">
+                                <div className="kiosk-section-heading">
+                                    <span className="kiosk-section-emoji">{section.emoji}</span>
+                                    <h2
+                                        className="kiosk-section-title"
+                                        style={{ backgroundImage: `linear-gradient(135deg, ${section.gradient})` }}
+                                    >
+                                        {section.label}
+                                    </h2>
+                                </div>
+                                <div className="kiosk-grid">
+                                    {section.items.map((item) => {
+                                        const inCart = cart.find((c) => c.id === item.id);
+                                        const color  = cardColor(item.id);
+                                        return (
+                                            <div key={item.id} className="kiosk-card" onClick={() => addToCart(item)}>
+                                                <div className="kiosk-card-banner" style={{ background: color }} />
+                                                <div className="kiosk-card-body">
+                                                    <span className="kiosk-card-emoji">{itemEmoji(item.id)}</span>
+                                                    <div className="kiosk-card-name">{item.name}</div>
+                                                    <div className="kiosk-card-footer">
+                                                        <span className="kiosk-card-price">{fmt(item.price)}</span>
                                                         <button
                                                             className="kiosk-card-add"
                                                             style={{ background: color }}
-                                                            onClick={(e) => { e.stopPropagation(); addToCart(apiItem); }}
-                                                        >
-                                                            +
-                                                        </button>
-                                                    )}
+                                                            onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                                        >+</button>
+                                                    </div>
+                                                </div>
+                                                {inCart && <div className="kiosk-card-tag">In Cart: {inCart.qty}</div>}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {/* Anything from the API that didn't match a section */}
+                    {ungrouped.length > 0 && (
+                        <div className="kiosk-section">
+                            <div className="kiosk-section-heading">
+                                <span className="kiosk-section-emoji">🥤</span>
+                                <h2
+                                    className="kiosk-section-title"
+                                    style={{ backgroundImage: "linear-gradient(135deg, #c77dff, #4361ee)" }}
+                                >
+                                    Other
+                                </h2>
+                            </div>
+                            <div className="kiosk-grid">
+                                {ungrouped.map((item) => {
+                                    const inCart = cart.find((c) => c.id === item.id);
+                                    const color  = cardColor(item.id);
+                                    return (
+                                        <div key={item.id} className="kiosk-card" onClick={() => addToCart(item)}>
+                                            <div className="kiosk-card-banner" style={{ background: color }} />
+                                            <div className="kiosk-card-body">
+                                                <span className="kiosk-card-emoji">{itemEmoji(item.id)}</span>
+                                                <div className="kiosk-card-name">{item.name}</div>
+                                                <div className="kiosk-card-footer">
+                                                    <span className="kiosk-card-price">{fmt(item.price)}</span>
+                                                    <button
+                                                        className="kiosk-card-add"
+                                                        style={{ background: color }}
+                                                        onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                                    >+</button>
                                                 </div>
                                             </div>
-                                            {inCart && (
-                                                <div className="kiosk-card-tag">In Cart: {inCart.qty}</div>
-                                            )}
-                                            {!apiItem && (
-                                                <div className="kiosk-card-tag kiosk-card-tag--unavail">Coming soon</div>
-                                            )}
+                                            {inCart && <div className="kiosk-card-tag">In Cart: {inCart.qty}</div>}
                                         </div>
                                     );
                                 })}
                             </div>
                         </div>
-                    ))}
+                    )}
 
-                    {/* Ice & Sugar Customization  */}
+                    {/* ── Ice & Sugar Customizations ── */}
                     <div className="kiosk-section">
                         <div className="kiosk-section-heading">
                             <span className="kiosk-section-emoji">🧊</span>
@@ -301,9 +313,7 @@ export default function CustomerView() {
                                 Ice &amp; Sugar Customizations
                             </h2>
                         </div>
-
                         <div className="kiosk-custom-panel">
-                            {/* Ice */}
                             <div className="kiosk-custom-group">
                                 <div className="kiosk-custom-group-label">🧊 Ice</div>
                                 <div className="kiosk-custom-options">
@@ -313,7 +323,7 @@ export default function CustomerView() {
                                                 type="radio"
                                                 name="ice"
                                                 checked={selectedIce === opt}
-                                                onChange={() => setSelectedIce(selectedIce === opt ? null : opt)}
+                                                onChange={() => setSelectedIce(opt)}
                                                 onClick={() => { if (selectedIce === opt) setSelectedIce(null); }}
                                             />
                                             <span className="kiosk-custom-radio-box" />
@@ -322,8 +332,6 @@ export default function CustomerView() {
                                     ))}
                                 </div>
                             </div>
-
-                            {/* Sugar */}
                             <div className="kiosk-custom-group">
                                 <div className="kiosk-custom-group-label">🍬 Sugar</div>
                                 <div className="kiosk-custom-options">
@@ -333,7 +341,7 @@ export default function CustomerView() {
                                                 type="radio"
                                                 name="sugar"
                                                 checked={selectedSugar === opt}
-                                                onChange={() => setSelectedSugar(selectedSugar === opt ? null : opt)}
+                                                onChange={() => setSelectedSugar(opt)}
                                                 onClick={() => { if (selectedSugar === opt) setSelectedSugar(null); }}
                                             />
                                             <span className="kiosk-custom-radio-box" />
@@ -344,9 +352,10 @@ export default function CustomerView() {
                             </div>
                         </div>
                     </div>
+
                 </div>
 
-                {/*  Cart Panel */}
+                {/* ── Cart Panel ── */}
                 <aside className="kiosk-cart">
                     <div className="kiosk-cart-header">
                         <h2 className="kiosk-cart-title">Your Order</h2>
@@ -379,7 +388,6 @@ export default function CustomerView() {
                         )}
                     </div>
 
-                    {/* Customization summary in cart */}
                     {(selectedIce || selectedSugar) && (
                         <div className="kiosk-cart-customizations">
                             <div className="kiosk-cart-custom-title">🧊 Customizations</div>
@@ -413,17 +421,13 @@ export default function CustomerView() {
                 </aside>
             </div>
 
-            {/* Payment Modal */}
+            {/* ── Payment Modal ── */}
             {showPayModal && (
-                <div
-                    className="kiosk-modal-backdrop"
-                    onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}
-                >
+                <div className="kiosk-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
                     <div className="kiosk-modal">
                         <p className="kiosk-modal-title">Almost there! 🎉</p>
                         <p className="kiosk-modal-total">{fmt(total)}</p>
 
-                        {/* Show customizations in modal */}
                         {(selectedIce || selectedSugar) && (
                             <div className="kiosk-modal-custom-summary">
                                 {selectedIce   && <span className="kiosk-modal-custom-tag">🧊 {selectedIce}</span>}
@@ -434,15 +438,11 @@ export default function CustomerView() {
                         <p className="kiosk-modal-label">How would you like to pay?</p>
                         <div className="kiosk-pay-methods">
                             {[
-                                { key: "CASH",   label: "Cash",   icon: "💵" },
-                                { key: "CARD",   label: "Card",   icon: "💳" },
+                                { key: "CASH", label: "Cash", icon: "💵" },
+                                { key: "CARD", label: "Card", icon: "💳" },
                                 { key: "MOBILE", label: "Mobile", icon: "📱" },
                             ].map((m) => (
-                                <button
-                                    key={m.key}
-                                    className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`}
-                                    onClick={() => setPayMethod(m.key)}
-                                >
+                                <button key={m.key} className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`} onClick={() => setPayMethod(m.key)}>
                                     <span className="pay-icon">{m.icon}</span>
                                     {m.label}
                                 </button>
@@ -459,7 +459,6 @@ export default function CustomerView() {
                 </div>
             )}
 
-            {/*  Toast  */}
             {toast && <div className="kiosk-toast">{toast}</div>}
         </div>
     );
