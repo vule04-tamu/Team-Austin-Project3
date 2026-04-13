@@ -83,9 +83,13 @@ SELECT v.category, v.name, v.price, NULL, 1.0
 FROM (VALUES
     ('Ice Level', 'No Ice', 0.00::numeric),
     ('Ice Level', 'Light Ice', 0.00::numeric),
-    ('Sugar Level', 'No Sugar', 0.00::numeric),
-    ('Sugar Level', 'Light Sugar', 0.00::numeric),
-    ('Sugar Level', 'Extra Sugar', 0.00::numeric),
+    ('Ice Level', 'Regular Ice', 0.00::numeric),
+    ('Ice Level', 'Extra Ice', 0.00::numeric),
+    ('Sugar Level', '0%', 0.00::numeric),
+    ('Sugar Level', '25%', 0.00::numeric),
+    ('Sugar Level', '50%', 0.00::numeric),
+    ('Sugar Level', '75%', 0.00::numeric),
+    ('Sugar Level', '100%', 0.00::numeric),
     ('Toppings', 'Boba Pearls', 0.50::numeric),
     ('Toppings', 'Lychee Jelly', 0.50::numeric)
 ) AS v(category, name, price)

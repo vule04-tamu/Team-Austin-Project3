@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+    defaultCustomizationSelection,
+    ensureIceSugarDefaults,
+    isExclusiveCategory,
+    selectExclusiveInCategory,
+    sortOptionsForDisplay,
+} from "./customizationUtils";
 import "./CustomerView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -17,6 +24,7 @@ const SECTIONS = [
     {
         key: "milk-teas",
         label: "Milk Teas",
+        tabLabel: "Milk Teas",
         gradient: "#ff6b9d, #c77dff",
         names: [
             "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea", "Thai Milk Tea",
@@ -27,6 +35,7 @@ const SECTIONS = [
     {
         key: "fruit-teas",
         label: "Fruit, Green, & Oolong Teas",
+        tabLabel: "Fruit & Tea",
         gradient: "#06d6a0, #4cc9f0",
         names: [
             "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea", "Peach Oolong Tea",
@@ -36,12 +45,14 @@ const SECTIONS = [
     {
         key: "specialties",
         label: "Specialties & Other Drinks",
+        tabLabel: "Specialties",
         gradient: "#ffd166, #ff9f1c",
-        names: ["Matcha Latte", "Matcha Dreamcicle", "jayden special", "Fresh Milk"],
+        names: ["Matcha Latte", "jayden special", "Fresh Milk"],
     },
     {
         key: "toppings",
         label: "Toppings / Add-ons",
+        tabLabel: "Toppings",
         gradient: "#ff9f1c, #ef233c",
         names: ["Boba Pearls", "Lychee Jelly"],
     },
@@ -69,6 +80,7 @@ export default function CustomerView() {
 
     const [customizeModal, setCustomizeModal] = useState(null);
     const [pendingCustomIds, setPendingCustomIds] = useState([]);
+    const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
 
     useEffect(() => {
         (async () => {
@@ -154,7 +166,9 @@ export default function CustomerView() {
     const onDrinkClick = (item) => {
         if (item.customizable && customizationOptions.length > 0) {
             setCustomizeModal({ item });
-            setPendingCustomIds([]);
+            setPendingCustomIds(
+                defaultCustomizationSelection(customizationOptions),
+            );
             return;
         }
         pushLine(item, []);
@@ -162,16 +176,36 @@ export default function CustomerView() {
 
     const confirmCustomize = () => {
         if (!customizeModal) return;
-        pushLine(customizeModal.item, pendingCustomIds);
+        const ids = ensureIceSugarDefaults(
+            pendingCustomIds,
+            customizationOptions,
+        );
+        pushLine(customizeModal.item, ids);
         setCustomizeModal(null);
         setPendingCustomIds([]);
     };
 
-    const togglePendingOption = (id) => {
-        setPendingCustomIds((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-        );
-    };
+    const handleCustomizationClick = useCallback(
+        (category, optionId) => {
+            if (isExclusiveCategory(category)) {
+                setPendingCustomIds((prev) =>
+                    selectExclusiveInCategory(
+                        prev,
+                        customizationOptions,
+                        category,
+                        optionId,
+                    ),
+                );
+            } else {
+                setPendingCustomIds((prev) =>
+                    prev.includes(optionId)
+                        ? prev.filter((x) => x !== optionId)
+                        : [...prev, optionId],
+                );
+            }
+        },
+        [customizationOptions],
+    );
 
     const changeQty = (lineId, delta) => {
         setCart((prev) =>
@@ -229,10 +263,27 @@ export default function CustomerView() {
         }
     };
 
-    const grouped = SECTIONS.map((section) => ({
-        ...section,
-        items: menuItems.filter((item) => section.names.includes(item.name)),
-    }));
+    const grouped = useMemo(
+        () =>
+            SECTIONS.map((section) => ({
+                ...section,
+                items: menuItems.filter((item) =>
+                    section.names.includes(item.name),
+                ),
+            })),
+        [menuItems],
+    );
+
+    useEffect(() => {
+        const tabOk = grouped.some(
+            (s) => s.key === menuTab && s.items.length > 0,
+        );
+        if (tabOk) return;
+        const first = grouped.find((s) => s.items.length > 0);
+        if (first) setMenuTab(first.key);
+    }, [grouped, menuTab]);
+
+    const activeSection = grouped.find((s) => s.key === menuTab);
 
     if (loading) return (
         <div className="kiosk-root">
@@ -284,57 +335,102 @@ export default function CustomerView() {
                 </div>
             </header>
 
-            <div className="kiosk-hero">
-                <h1>Welcome! </h1>
-                <p>Tap any drink to add it to your order</p>
+            <div className="kiosk-hero kiosk-hero-compact">
+                <h1>Welcome!</h1>
+                <p>Pick a category, then tap a drink</p>
             </div>
 
             <div className="kiosk-body">
-                <div className="kiosk-menu">
-                    {grouped.map((section) => {
-                        if (section.items.length === 0) return null;
-                        return (
-                            <div key={section.key} className="kiosk-section">
-                                <div className="kiosk-section-heading">
-                                    <h2
-                                        className="kiosk-section-title"
-                                        style={{ backgroundImage: `linear-gradient(135deg, ${section.gradient})` }}
-                                    >
-                                        {section.label}
-                                    </h2>
-                                </div>
-                                <div className="kiosk-grid">
-                                    {section.items.map((item) => {
-                                        const inCart = cart.find((c) => c.id === item.id && !(c.customizationIds?.length));
-                                        const color = cardColor(item.id);
-                                        return (
-                                            <div key={item.id} className="kiosk-card" onClick={() => onDrinkClick(item)}>
-                                                <div className="kiosk-card-banner" style={{ background: color }} />
-                                                <div className="kiosk-card-body">
-                                                    <div className="kiosk-card-name">{item.name}</div>
-                                                    <div className="kiosk-card-footer">
-                                                        <span className="kiosk-card-price">{fmt(item.price)}</span>
-                                                        <button
-                                                            type="button"
-                                                            className="kiosk-card-add"
-                                                            style={{ background: color }}
-                                                            onClick={(e) => { e.stopPropagation(); onDrinkClick(item); }}
-                                                        >+</button>
-                                                    </div>
+                <div className="kiosk-menu-column">
+                    <div className="kiosk-menu-tabs" role="tablist" aria-label="Menu categories">
+                        {grouped.map((section) => {
+                            if (section.items.length === 0) return null;
+                            const selected = menuTab === section.key;
+                            return (
+                                <button
+                                    key={section.key}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={selected}
+                                    className={`kiosk-menu-tab ${selected ? "kiosk-menu-tab-active" : ""}`}
+                                    style={
+                                        selected
+                                            ? {
+                                                  backgroundImage: `linear-gradient(135deg, ${section.gradient})`,
+                                              }
+                                            : undefined
+                                    }
+                                    onClick={() => setMenuTab(section.key)}
+                                >
+                                    {section.tabLabel ?? section.label}
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div
+                        className="kiosk-menu-tab-panel"
+                        role="tabpanel"
+                        aria-label={activeSection?.label ?? "Menu"}
+                    >
+                        {activeSection && activeSection.items.length > 0 ? (
+                            <div className="kiosk-grid">
+                                {activeSection.items.map((item) => {
+                                    const inCart = cart.find(
+                                        (c) =>
+                                            c.id === item.id &&
+                                            !(c.customizationIds?.length),
+                                    );
+                                    const color = cardColor(item.id);
+                                    return (
+                                        <div
+                                            key={item.id}
+                                            className="kiosk-card"
+                                            onClick={() => onDrinkClick(item)}
+                                        >
+                                            <div
+                                                className="kiosk-card-banner"
+                                                style={{ background: color }}
+                                            />
+                                            <div className="kiosk-card-body">
+                                                <div className="kiosk-card-name">
+                                                    {item.name}
                                                 </div>
-                                                {item.customizable && customizationOptions.length > 0 && (
-                                                    <div className="kiosk-card-tag subtle">Tap to customize</div>
-                                                )}
-                                                {inCart && !item.customizable && (
-                                                    <div className="kiosk-card-tag">In Cart: {inCart.qty}</div>
-                                                )}
+                                                <div className="kiosk-card-footer">
+                                                    <span className="kiosk-card-price">
+                                                        {fmt(item.price)}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        className="kiosk-card-add"
+                                                        style={{ background: color }}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDrinkClick(item);
+                                                        }}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
                                             </div>
-                                        );
-                                    })}
-                                </div>
+                                            {item.customizable &&
+                                                customizationOptions.length > 0 && (
+                                                    <div className="kiosk-card-tag subtle">
+                                                        Tap to customize
+                                                    </div>
+                                                )}
+                                            {inCart && !item.customizable && (
+                                                <div className="kiosk-card-tag">
+                                                    In Cart: {inCart.qty}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        );
-                    })}
+                        ) : (
+                            <p className="kiosk-tab-empty">No drinks in this category.</p>
+                        )}
+                    </div>
                 </div>
 
                 <aside className="kiosk-cart">
@@ -412,18 +508,52 @@ export default function CustomerView() {
                 >
                     <div className="kiosk-modal kiosk-customize-modal">
                         <p className="kiosk-modal-title">Customize {customizeModal.item.name}</p>
-                        <p className="kiosk-modal-label">Select add-ons (optional)</p>
+                        <p className="kiosk-modal-label">
+                            Ice &amp; sugar: pick one each · toppings optional
+                        </p>
                         <div className="kiosk-customize-scroll">
                             {[...optionsByCategory.entries()].map(([cat, opts]) => (
                                 <div key={cat} className="kiosk-customize-block">
-                                    <div className="kiosk-customize-cat">{cat}</div>
-                                    <div className="kiosk-customize-chips">
-                                        {opts.map((o) => (
+                                    <div className="kiosk-customize-cat">
+                                        {cat}
+                                        {isExclusiveCategory(cat) && (
+                                            <span className="kiosk-customize-cat-hint">
+                                                {" "}
+                                                — one only
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div
+                                        className={
+                                            isExclusiveCategory(cat)
+                                                ? "kiosk-customize-chips kiosk-customize-chips-exclusive"
+                                                : "kiosk-customize-chips"
+                                        }
+                                        role={
+                                            isExclusiveCategory(cat)
+                                                ? "radiogroup"
+                                                : undefined
+                                        }
+                                        aria-label={cat}
+                                    >
+                                        {sortOptionsForDisplay(cat, opts).map((o) => (
                                             <button
                                                 type="button"
                                                 key={o.id}
+                                                role={
+                                                    isExclusiveCategory(cat)
+                                                        ? "radio"
+                                                        : undefined
+                                                }
+                                                aria-checked={
+                                                    isExclusiveCategory(cat)
+                                                        ? pendingCustomIds.includes(o.id)
+                                                        : undefined
+                                                }
                                                 className={`kiosk-chip ${pendingCustomIds.includes(o.id) ? "on" : ""}`}
-                                                onClick={() => togglePendingOption(o.id)}
+                                                onClick={() =>
+                                                    handleCustomizationClick(cat, o.id)
+                                                }
                                             >
                                                 {o.name}
                                                 {Number(o.priceModifier) > 0 && (

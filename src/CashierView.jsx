@@ -1,5 +1,12 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+    defaultCustomizationSelection,
+    ensureIceSugarDefaults,
+    isExclusiveCategory,
+    selectExclusiveInCategory,
+    sortOptionsForDisplay,
+} from "./customizationUtils";
 import "./CashierView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -135,7 +142,9 @@ export default function CashierView() {
     const onMenuCardClick = (item) => {
         if (item.customizable) {
             setCustomizeModal({ item });
-            setPendingCustomIds([]);
+            setPendingCustomIds(
+                defaultCustomizationSelection(customizationOptions),
+            );
             return;
         }
         pushLine(item, []);
@@ -143,16 +152,36 @@ export default function CashierView() {
 
     const confirmCustomize = () => {
         if (!customizeModal) return;
-        pushLine(customizeModal.item, pendingCustomIds);
+        const ids = ensureIceSugarDefaults(
+            pendingCustomIds,
+            customizationOptions,
+        );
+        pushLine(customizeModal.item, ids);
         setCustomizeModal(null);
         setPendingCustomIds([]);
     };
 
-    const togglePendingOption = (id) => {
-        setPendingCustomIds((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-        );
-    };
+    const handleCustomizationClick = useCallback(
+        (category, optionId) => {
+            if (isExclusiveCategory(category)) {
+                setPendingCustomIds((prev) =>
+                    selectExclusiveInCategory(
+                        prev,
+                        customizationOptions,
+                        category,
+                        optionId,
+                    ),
+                );
+            } else {
+                setPendingCustomIds((prev) =>
+                    prev.includes(optionId)
+                        ? prev.filter((x) => x !== optionId)
+                        : [...prev, optionId],
+                );
+            }
+        },
+        [customizationOptions],
+    );
 
     const changeQty = (lineId, delta) => {
         setCart((prev) =>
@@ -446,7 +475,7 @@ export default function CashierView() {
                             Customize — {customizeModal.item.name}
                         </p>
                         <p className="modal-section-label">
-                            Select add-ons (optional)
+                            Ice &amp; sugar (one each) · toppings optional
                         </p>
                         <div className="customize-groups">
                             {[...optionsByCategory.entries()].map(
@@ -454,15 +483,51 @@ export default function CashierView() {
                                     <div key={cat} className="customize-group">
                                         <div className="customize-cat-label">
                                             {cat}
+                                            {isExclusiveCategory(cat) && (
+                                                <span className="customize-cat-hint">
+                                                    {" "}
+                                                    — pick one
+                                                </span>
+                                            )}
                                         </div>
-                                        <div className="customize-chips">
-                                            {opts.map((o) => (
+                                        <div
+                                            className={
+                                                isExclusiveCategory(cat)
+                                                    ? "customize-chips customize-chips-exclusive"
+                                                    : "customize-chips"
+                                            }
+                                            role={
+                                                isExclusiveCategory(cat)
+                                                    ? "radiogroup"
+                                                    : undefined
+                                            }
+                                            aria-label={cat}
+                                        >
+                                            {sortOptionsForDisplay(
+                                                cat,
+                                                opts,
+                                            ).map((o) => (
                                                 <button
                                                     type="button"
                                                     key={o.id}
+                                                    role={
+                                                        isExclusiveCategory(cat)
+                                                            ? "radio"
+                                                            : undefined
+                                                    }
+                                                    aria-checked={
+                                                        isExclusiveCategory(cat)
+                                                            ? pendingCustomIds.includes(
+                                                                  o.id,
+                                                              )
+                                                            : undefined
+                                                    }
                                                     className={`customize-chip ${pendingCustomIds.includes(o.id) ? "active" : ""}`}
                                                     onClick={() =>
-                                                        togglePendingOption(o.id)
+                                                        handleCustomizationClick(
+                                                            cat,
+                                                            o.id,
+                                                        )
                                                     }
                                                 >
                                                     {o.name}

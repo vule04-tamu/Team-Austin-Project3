@@ -22,13 +22,15 @@
 }
 
 .kiosk-root {
-    min-height: 100svh;
+    height: 100dvh;
+    max-height: 100dvh;
     width: 100vw;
+    max-width: 100vw;
     background: linear-gradient(135deg, #1a0a2e 0%, #2d1057 40%, #1a0a2e 100%);
     font-family: "Nunito", sans-serif;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
+    overflow: hidden;
     position: relative;
 }
 
@@ -197,6 +199,18 @@
     font-weight: 600;
 }
 
+.kiosk-hero-compact {
+    padding: 10px 28px 8px;
+}
+
+.kiosk-hero-compact h1 {
+    font-size: clamp(22px, 3.2vw, 34px);
+}
+
+.kiosk-hero-compact p {
+    font-size: 13px;
+}
+
 /* Main Layout */
 .kiosk-body {
     position: relative;
@@ -204,27 +218,79 @@
     display: flex;
     flex: 1;
     gap: 20px;
-    padding: 16px 28px 28px;
+    padding: 10px 28px 20px;
     overflow: hidden;
     min-height: 0;
+    align-items: stretch;
 }
 
-/* Menu column */
-.kiosk-menu {
+/* Menu: tabs + scrollable panel (cart stays fixed beside it) */
+.kiosk-menu-column {
     flex: 1;
-    overflow-y: auto;
-    padding-right: 6px;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 36px;
+    gap: 12px;
+    overflow: hidden;
 }
 
-.kiosk-menu::-webkit-scrollbar { width: 5px; }
-.kiosk-menu::-webkit-scrollbar-thumb {
+.kiosk-menu-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.kiosk-menu-tab {
+    border: 2px solid rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.85);
+    font-family: "Nunito", sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 10px 16px;
+    border-radius: var(--pill-radius);
+    cursor: pointer;
+    transition: all 0.18s;
+}
+
+.kiosk-menu-tab:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+    color: #fff;
+}
+
+.kiosk-menu-tab-active {
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+.kiosk-menu-tab-panel {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.kiosk-menu-tab-panel::-webkit-scrollbar {
+    width: 5px;
+}
+
+.kiosk-menu-tab-panel::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 4px;
+}
+
+.kiosk-tab-empty {
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 14px;
+    font-weight: 600;
+    margin: 12px 0;
 }
 
 /* ── Section ── */
@@ -487,10 +553,15 @@
     color: #fff;
 }
 
-/* Cart Panel */
+/* Cart Panel — fixed column; only cart items list scrolls inside */
 .kiosk-cart {
     width: 320px;
     min-width: 280px;
+    flex-shrink: 0;
+    align-self: stretch;
+    height: 100%;
+    max-height: 100%;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     background: rgba(255, 255, 255, 0.07);
@@ -498,8 +569,6 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 24px;
     overflow: hidden;
-    flex-shrink: 0;
-    max-height: 100%;
 }
 
 .kiosk-cart-header {
@@ -530,7 +599,10 @@
 
 .kiosk-cart-items {
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
     padding: 12px 0;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
@@ -1086,6 +1158,13 @@
     text-transform: uppercase;
     color: var(--boba-muted);
     margin-bottom: 8px;
+}
+
+.kiosk-customize-cat-hint {
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: none;
+    color: #9e9aa8;
 }
 
 .kiosk-customize-chips {

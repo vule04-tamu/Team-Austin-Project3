@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import "./Menu.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 const SECTIONS = [
   {
     label: "Milk Teas",
@@ -20,7 +22,7 @@ const SECTIONS = [
   },
   {
     label: "Specialties & Other Drinks",
-    names: ["Matcha Latte", "Fresh Milk", "Jayden Special", "Matcha Dreamcicle"]
+    names: ["Matcha Latte", "Fresh Milk", "Jayden Special"]
   },
   {
     label: "Toppings / Add-ons",
@@ -34,10 +36,21 @@ export default function Menu() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    const prevHtml = document.documentElement.style.overflow;
+    const prevBody = document.body.style.overflow;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.documentElement.style.overflow = prevHtml;
+      document.body.style.overflow = prevBody;
+    };
+  }, []);
+
+  useEffect(() => {
     const fetchMenu = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/menu");
+        const response = await fetch(`${API_BASE}/api/menu`);
         if (!response.ok) throw new Error("Failed to fetch menu");
         setMenuItems(await response.json());
         setError(null);
@@ -51,50 +64,61 @@ export default function Menu() {
     fetchMenu();
   }, []);
 
-  if (loading) return <div className="menu-wrap"><p className="menu-status">Loading menu…</p></div>;
-  if (error)   return <div className="menu-wrap"><p className="menu-status menu-error">Error: {error}</p></div>;
+  if (loading) {
+    return (
+      <div className="menu-wrap menu-board">
+        <p className="menu-status">Loading menu…</p>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="menu-wrap menu-board">
+        <p className="menu-status menu-error">Error: {error}</p>
+      </div>
+    );
+  }
 
-  const byName = Object.fromEntries(menuItems.map(item => [item.name, item]));
+  const byName = Object.fromEntries(menuItems.map((item) => [item.name, item]));
 
   return (
-    <div className="menu-wrap">
-      <header className="menu-header">
-        <h1 className="shop-name">Austin's Boba Shop</h1>
+    <div className="menu-wrap menu-board">
+      <header className="menu-board-header">
+        <h1 className="shop-name">{"Austin's Boba Shop"}</h1>
         <div className="divider">
           <span className="divider-line" />
           <span className="divider-dot" />
           <span className="divider-line" />
         </div>
-        <p className="shop-tagline">Handcrafted drinks</p>
+        <p className="menu-board-tagline">Handcrafted drinks</p>
       </header>
 
-      {SECTIONS.map(({ label, names }) => {
-        const items = names.map(n => byName[n]).filter(Boolean);
-        if (items.length === 0) return null;
-        return (
-          <section key={label} className="menu-section">
-            <div className="section-header">
-              <h2 className="section-label">{label}</h2>
-              <span className="section-line" />
-            </div>
-            <div className="items-grid">
-              {items.map((item) => (
-                <div key={item.id} className="item-card">
-                  <p className="item-name">{item.name}</p>
-                  <div className="item-footer">
-                    <span className="item-price">${item.price.toFixed(2)}</span>
-                    {item.customization && (
-                      <span className="item-badge">Customizable</span>
-                    )}
+      <div className="menu-board-main">
+        {SECTIONS.map(({ label, names }) => {
+          const items = names.map((n) => byName[n]).filter(Boolean);
+          if (items.length === 0) return null;
+          return (
+            <section key={label} className="menu-board-col">
+              <h2 className="menu-board-col-title">{label}</h2>
+              <div className="menu-board-items">
+                {items.map((item) => (
+                  <div key={item.id} className="menu-board-item">
+                    <p className="item-name">{item.name}</p>
+                    <div className="item-footer">
+                      <span className="item-price">${item.price.toFixed(2)}</span>
+                      {item.customizable && (
+                        <span className="item-badge">Custom</span>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
 
-      <p className="footer-note">All drinks can be customized · Ask your barista</p>
+      <p className="menu-board-footer">Ask your barista to customize any drink</p>
     </div>
   );
 }
