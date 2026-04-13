@@ -1,12 +1,32 @@
 import { useState, useEffect } from "react";
 import "./Menu.css";
 
-function groupByCategory(items) {
-  return items.reduce((acc, item) => {
-    (acc[item.category] = acc[item.category] || []).push(item);
-    return acc;
-  }, {});
-}
+const SECTIONS = [
+  {
+    label: "Milk Teas",
+    names: [
+      "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea",
+      "Thai Milk Tea", "Honey Milk Tea", "Brown Sugar Milk Tea",
+      "Strawberry Milk Tea", "Wintermelon Milk Tea", "Coffee Milk Tea",
+      "Coconut Milk Tea", "Chocolate Milk Tea", "Oreo Milk Tea", "March Milk Tea"
+    ]
+  },
+  {
+    label: "Fruit, Green & Oolong Teas",
+    names: [
+      "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea",
+      "Peach Oolong Tea", "Wintermelon Tea", "Honey Lemon Tea", "Mint Tea"
+    ]
+  },
+  {
+    label: "Specialties & Other Drinks",
+    names: ["Matcha Latte", "Fresh Milk", "Jayden Special", "Matcha Dreamcicle"]
+  },
+  {
+    label: "Toppings / Add-ons",
+    names: ["Boba Pearls", "Lychee Jelly"]
+  }
+];
 
 export default function Menu() {
   const [menuItems, setMenuItems] = useState([]);
@@ -34,7 +54,7 @@ export default function Menu() {
   if (loading) return <div className="menu-wrap"><p className="menu-status">Loading menu…</p></div>;
   if (error)   return <div className="menu-wrap"><p className="menu-status menu-error">Error: {error}</p></div>;
 
-  const grouped = groupByCategory(menuItems);
+  const byName = Object.fromEntries(menuItems.map(item => [item.name, item]));
 
   return (
     <div className="menu-wrap">
@@ -48,27 +68,31 @@ export default function Menu() {
         <p className="shop-tagline">Handcrafted drinks · Made with love</p>
       </header>
 
-      {Object.entries(grouped).map(([category, items]) => (
-        <section key={category} className="menu-section">
-          <div className="section-header">
-            <h2 className="section-label">{category}</h2>
-            <span className="section-line" />
-          </div>
-          <div className="items-grid">
-            {items.map((item) => (
-              <div key={item.id} className="item-card">
-                <p className="item-name">{item.name}</p>
-                <div className="item-footer">
-                  <span className="item-price">${item.price.toFixed(2)}</span>
-                  {item.customization && (
-                    <span className="item-badge">Customizable</span>
-                  )}
+      {SECTIONS.map(({ label, names }) => {
+        const items = names.map(n => byName[n]).filter(Boolean);
+        if (items.length === 0) return null;
+        return (
+          <section key={label} className="menu-section">
+            <div className="section-header">
+              <h2 className="section-label">{label}</h2>
+              <span className="section-line" />
+            </div>
+            <div className="items-grid">
+              {items.map((item) => (
+                <div key={item.id} className="item-card">
+                  <p className="item-name">{item.name}</p>
+                  <div className="item-footer">
+                    <span className="item-price">${item.price.toFixed(2)}</span>
+                    {item.customization && (
+                      <span className="item-badge">Customizable</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+              ))}
+            </div>
+          </section>
+        );
+      })}
 
       <p className="footer-note">All drinks can be customized · Ask your barista</p>
     </div>
