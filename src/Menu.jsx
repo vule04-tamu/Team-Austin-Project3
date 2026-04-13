@@ -7,22 +7,40 @@ const SECTIONS = [
   {
     label: "Milk Teas",
     names: [
-      "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea",
-      "Thai Milk Tea", "Honey Milk Tea", "Brown Sugar Milk Tea",
-      "Strawberry Milk Tea", "Wintermelon Milk Tea", "Coffee Milk Tea",
-      "Coconut Milk Tea", "Chocolate Milk Tea", "Oreo Milk Tea", "March Milk Tea"
+      "Classic Milk Tea", "Classic Milk Tea (Large)",
+      "Jasmine Green Milk Tea", "Jasmine Green Milk Tea (Large)",
+      "Taro Milk Tea", "Taro Milk Tea (Large)",
+      "Thai Milk Tea", "Thai Milk Tea (Large)",
+      "Honey Milk Tea", "Honey Milk Tea (Large)",
+      "Brown Sugar Milk Tea", "Brown Sugar Milk Tea (Large)",
+      "Strawberry Milk Tea", "Strawberry Milk Tea (Large)",
+      "Wintermelon Milk Tea", "Wintermelon Milk Tea (Large)",
+      "Coffee Milk Tea", "Coffee Milk Tea (Large)",
+      "Coconut Milk Tea", "Coconut Milk Tea (Large)",
+      "Chocolate Milk Tea", "Chocolate Milk Tea (Large)",
+      "Oreo Milk Tea", "Oreo Milk Tea (Large)",
+      "March Milk Tea", "March Milk Tea (Large)",
     ]
   },
   {
     label: "Fruit, Green & Oolong Teas",
     names: [
-      "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea",
-      "Peach Oolong Tea", "Wintermelon Tea", "Honey Lemon Tea", "Mint Tea"
+      "Mango Green Tea", "Mango Green Tea (Large)",
+      "Passion Fruit Tea", "Passion Fruit Tea (Large)",
+      "Lychee Green Tea", "Lychee Green Tea (Large)",
+      "Peach Oolong Tea", "Peach Oolong Tea (Large)",
+      "Wintermelon Tea", "Wintermelon Tea (Large)",
+      "Honey Lemon Tea", "Honey Lemon Tea (Large)",
+      "Mint Tea", "Mint Tea (Large)",
     ]
   },
   {
     label: "Specialties & Other Drinks",
-    names: ["Matcha Latte", "Fresh Milk", "Jayden Special"]
+    names: [
+      "Matcha Latte", "Matcha Latte (Large)",
+      "jayden special", "jayden special (Large)",
+      "Fresh Milk", "Fresh Milk (Large)",
+    ]
   },
   {
     label: "Toppings / Add-ons",
