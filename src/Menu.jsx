@@ -39,31 +39,38 @@ export default function Menu() {
   return (
     <div className="menu-wrap">
       <header className="menu-header">
-        <h1>Menu</h1>
+        <h1 className="shop-name">Boba Shop</h1>
+        <div className="divider">
+          <span className="divider-line" />
+          <span className="divider-dot" />
+          <span className="divider-line" />
+        </div>
+        <p className="shop-tagline">Handcrafted drinks · Made with love</p>
       </header>
 
-      {Object.keys(grouped).length === 0 ? (
-        <p className="menu-status">No menu items available.</p>
-      ) : (
-        Object.entries(grouped).map(([category, items]) => (
-          <section key={category} className="menu-section">
-            <h2 className="section-title">{category}</h2>
+      {Object.entries(grouped).map(([category, items]) => (
+        <section key={category} className="menu-section">
+          <div className="section-header">
+            <h2 className="section-label">{category}</h2>
+            <span className="section-line" />
+          </div>
+          <div className="items-grid">
             {items.map((item) => (
-              <div key={item.id} className="menu-row">
-                <div className="row-left">
-                  <p className="item-name">{item.name}</p>
-                </div>
-                <div className="row-right">
-                  {item.customization && (
-                    <span className="badge">Customizable</span>
-                  )}
+              <div key={item.id} className="item-card">
+                <p className="item-name">{item.name}</p>
+                <div className="item-footer">
                   <span className="item-price">${item.price.toFixed(2)}</span>
+                  {item.customization && (
+                    <span className="item-badge">Customizable</span>
+                  )}
                 </div>
               </div>
             ))}
-          </section>
-        ))
-      )}
+          </div>
+        </section>
+      ))}
+
+      <p className="footer-note">All drinks can be customized · Ask your barista</p>
     </div>
   );
 }
