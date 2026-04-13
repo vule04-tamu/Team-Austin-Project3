@@ -152,7 +152,7 @@ export default function CustomerView() {
     }, [showToast]);
 
     const onDrinkClick = (item) => {
-        if (item.customizable) {
+        if (item.customizable && customizationOptions.length > 0) {
             setCustomizeModal({ item });
             setPendingCustomIds([]);
             return;
@@ -324,7 +324,7 @@ export default function CustomerView() {
                                                         >+</button>
                                                     </div>
                                                 </div>
-                                                {item.customizable && (
+                                                {item.customizable && customizationOptions.length > 0 && (
                                                     <div className="kiosk-card-tag subtle">Tap to customize</div>
                                                 )}
                                                 {inCart && !item.customizable && (
@@ -415,6 +415,7 @@ export default function CustomerView() {
                 >
                     <div className="kiosk-modal kiosk-customize-modal">
                         <p className="kiosk-modal-title">Customize {customizeModal.item.name}</p>
+                        <p className="kiosk-modal-label">Select add-ons (optional)</p>
                         <div className="kiosk-customize-scroll">
                             {[...optionsByCategory.entries()].map(([cat, opts]) => (
                                 <div key={cat} className="kiosk-customize-block">
@@ -436,6 +437,11 @@ export default function CustomerView() {
                                     </div>
                                 </div>
                             ))}
+                            {customizationOptions.length === 0 && (
+                                <p style={{ color: "var(--boba-muted)", fontSize: 13 }}>
+                                    No customization options available yet.
+                                </p>
+                            )}
                         </div>
                         <div className="kiosk-modal-actions">
                             <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); }}>Cancel</button>
