@@ -245,16 +245,15 @@ export default function CustomerView() {
 
     if (error) return (
         <div className="kiosk-root">
-            <div className="kiosk-loading" style={{ color: "#ff6b9d" }}>⚠ {error}</div>
+            <div className="kiosk-loading" style={{ color: "#ff6b9d" }}> {error}</div>
         </div>
     );
 
     if (orderSuccess) return (
         <div className="kiosk-root">
             <div className="kiosk-success">
-                <div className="kiosk-success-icon">🎉</div>
                 <h2>Order Placed!</h2>
-                <p>Your boba is being prepared with love ✨</p>
+                <p>Thank you for your order!</p>
                 <div className="kiosk-success-order">Order #{orderNumber}</div>
                 <button type="button" className="kiosk-new-order-btn" onClick={() => { setOrderSuccess(false); setOrderNumber(null); }}>
                     Start New Order
@@ -267,7 +266,6 @@ export default function CustomerView() {
         <div className="kiosk-root">
             <header className="kiosk-header">
                 <div className="kiosk-brand">
-                    <span className="kiosk-brand-icon">🧋</span>
                     <div>
                         <div className="kiosk-brand-name">{"Austin's Boba Shop"}</div>
                         <div className="kiosk-brand-sub">Order Here</div>
@@ -278,7 +276,7 @@ export default function CustomerView() {
                     <button
                         type="button"
                         className="kiosk-cart-btn"
-                        onClick={() => cart.length > 0 ? setShowPayModal(true) : showToast("Add something first! 🧋")}
+                        onClick={() => cart.length > 0 ? setShowPayModal(true) : showToast("Add something first!")}
                     >
                         🛒 View Cart
                         {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
@@ -350,7 +348,6 @@ export default function CustomerView() {
                     <div className="kiosk-cart-items">
                         {cart.length === 0 ? (
                             <div className="kiosk-cart-empty">
-                                <div className="kiosk-cart-empty-icon">🥤</div>
                                 <p>Nothing here yet!<br />Tap a drink to add it.</p>
                             </div>
                         ) : (
@@ -454,7 +451,7 @@ export default function CustomerView() {
             {showPayModal && (
                 <div className="kiosk-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
                     <div className="kiosk-modal">
-                        <p className="kiosk-modal-title">Almost there! 🎉</p>
+                        <p className="kiosk-modal-title">Almost there!</p>
                         <p className="kiosk-modal-total">{fmt(total)}</p>
 
                         <p className="kiosk-modal-label">How would you like to pay?</p>
