@@ -1,71 +1,69 @@
 import { useState, useEffect } from "react";
 import "./Menu.css";
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+function groupByCategory(items) {
+  return items.reduce((acc, item) => {
+    (acc[item.category] = acc[item.category] || []).push(item);
+    return acc;
+  }, {});
+}
 
 export default function Menu() {
-    const [menuItems, setMenuItems] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchMenu = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(`${API_BASE}/api/menu`);
-                if (!response.ok) {
-                    throw new Error("Failed to fetch menu");
-                }
-                const data = await response.json();
-                setMenuItems(data);
-                setError(null);
-            } catch (err) {
-                setError(err.message);
-                setMenuItems([]);
-            } finally {
-                setLoading(false);
-            }
-        };
+  useEffect(() => {
+    const fetchMenu = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch("/api/menu");
+        if (!response.ok) throw new Error("Failed to fetch menu");
+        setMenuItems(await response.json());
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+        setMenuItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMenu();
+  }, []);
 
-        fetchMenu();
-    }, []);
+  if (loading) return <div className="menu-wrap"><p className="menu-status">Loading menu…</p></div>;
+  if (error)   return <div className="menu-wrap"><p className="menu-status menu-error">Error: {error}</p></div>;
 
-    if (loading) {
-        return (
-            <div className="menu-container">
-                <p>Loading menu...</p>
-            </div>
-        );
-    }
+  const grouped = groupByCategory(menuItems);
 
-    if (error) {
-        return (
-            <div className="menu-container">
-                <p className="error">Error: {error}</p>
-            </div>
-        );
-    }
+  return (
+    <div className="menu-wrap">
+      <header className="menu-header">
+        <h1>Menu</h1>
+      </header>
 
-    return (
-        <div className="menu-container">
-            <h1>Menu</h1>
-            <div className="menu-grid">
-                {menuItems.length === 0 ? (
-                    <p>No menu items available</p>
-                ) : (
-                    menuItems.map((item) => (
-                        <div key={item.id} className="menu-item">
-                            <h3>{item.name}</h3>
-                            <p className="price">${item.price.toFixed(2)}</p>
-                            {item.customizable && (
-                                <span className="customizable-badge">
-                                    Customizable
-                                </span>
-                            )}
-                        </div>
-                    ))
-                )}
-            </div>
-        </div>
-    );
+      {Object.keys(grouped).length === 0 ? (
+        <p className="menu-status">No menu items available.</p>
+      ) : (
+        Object.entries(grouped).map(([category, items]) => (
+          <section key={category} className="menu-section">
+            <h2 className="section-title">{category}</h2>
+            {items.map((item) => (
+              <div key={item.id} className="menu-row">
+                <div className="row-left">
+                  <p className="item-name">{item.name}</p>
+                </div>
+                <div className="row-right">
+                  {item.customization && (
+                    <span className="badge">Customizable</span>
+                  )}
+                  <span className="item-price">${item.price.toFixed(2)}</span>
+                </div>
+              </div>
+            ))}
+          </section>
+        ))
+      )}
+    </div>
+  );
 }
