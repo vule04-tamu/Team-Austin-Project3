@@ -35,6 +35,8 @@ export default function ManagerView() {
     const [salesSummary, setSalesSummary] = useState([]);
     const [topSelling, setTopSelling] = useState([]);
     const [xReportRows, setXReportRows] = useState([]);
+    const [selectedOrderDetail, setSelectedOrderDetail] = useState(null);
+    const [orderDetailBusy, setOrderDetailBusy] = useState(false);
     const [zTotals, setZTotals] = useState(null);
     const [zAlreadyRun, setZAlreadyRun] = useState(false);
     const [reportsBusy, setReportsBusy] = useState(false);
@@ -169,6 +171,25 @@ export default function ManagerView() {
         },
         [apiRequest],
     );
+
+    const loadOrderDetail = useCallback(
+        async (orderId) => {
+            setOrderDetailBusy(true);
+            try {
+                const detail = await apiRequest(`/api/orders/${orderId}`);
+                setSelectedOrderDetail(detail);
+            } catch (err) {
+                showToast(err.message || "Failed to load order details.");
+            } finally {
+                setOrderDetailBusy(false);
+            }
+        },
+        [apiRequest, showToast],
+    );
+
+    const closeOrderDetails = useCallback(() => {
+        setSelectedOrderDetail(null);
+    }, []);
 
     const refreshAll = useCallback(async () => {
         await fetchBaseData();
@@ -662,7 +683,17 @@ export default function ManagerView() {
                                                     ? new Date(o.orderDate).toLocaleString()
                                                     : "-"}
                                             </span>
-                                            <strong>{fmtMoney(o.total)}</strong>
+                                            <div className="row-actions">
+                                                <strong>{fmtMoney(o.total)}</strong>
+                                                <button
+                                                    className="mini-btn"
+                                                    type="button"
+                                                    onClick={() => loadOrderDetail(o.id)}
+                                                    disabled={orderDetailBusy}
+                                                >
+                                                    Details
+                                                </button>
+                                            </div>
                                         </li>
                                     ))}
                                 </ul>
@@ -1052,7 +1083,17 @@ export default function ManagerView() {
                                                         ? new Date(o.orderDate).toLocaleString()
                                                         : "-"}
                                                 </span>
-                                                <strong>{fmtMoney(o.total)}</strong>
+                                                <div className="row-actions">
+                                                    <strong>{fmtMoney(o.total)}</strong>
+                                                    <button
+                                                        className="mini-btn"
+                                                        type="button"
+                                                        onClick={() => loadOrderDetail(o.id)}
+                                                        disabled={orderDetailBusy}
+                                                    >
+                                                        Details
+                                                    </button>
+                                                </div>
                                             </li>
                                         ))}
                                     </ul>
@@ -1150,6 +1191,57 @@ export default function ManagerView() {
                         </div>
                     )}
                 </section>
+
+                {selectedOrderDetail && (
+                    <div className="modal-overlay" role="dialog" aria-modal="true">
+                        <div className="modal-panel">
+                            <div className="modal-header">
+                                <div>
+                                    <h3>Order #{selectedOrderDetail.id}</h3>
+                                    <p className="muted-copy">
+                                        {selectedOrderDetail.orderDate
+                                            ? new Date(selectedOrderDetail.orderDate).toLocaleString()
+                                            : "Unknown date"}
+                                    </p>
+                                </div>
+                                <button
+                                    className="ghost-btn"
+                                    type="button"
+                                    onClick={closeOrderDetails}
+                                >
+                                    Close
+                                </button>
+                            </div>
+                            <div className="modal-content">
+                                <div className="detail-row">
+                                    <span>Payment Method</span>
+                                    <strong>{selectedOrderDetail.paymentMethod || "Unknown"}</strong>
+                                </div>
+                                <div className="detail-row">
+                                    <span>Order Total</span>
+                                    <strong>{fmtMoney(selectedOrderDetail.totalAmount)}</strong>
+                                </div>
+                                <div className="detail-row detail-row-full">
+                                    <span>Items</span>
+                                    <div className="order-items-list">
+                                        {selectedOrderDetail.items?.length ? (
+                                            <ul>
+                                                {selectedOrderDetail.items.map((item) => (
+                                                    <li key={`${item.menuItemId}-${item.name}`}>
+                                                        <span>{item.name}</span>
+                                                        <span>x{item.quantity}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : (
+                                            <p className="muted-copy">No items found for this order.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
 
             {toast && <div className="toast">{toast}</div>}
