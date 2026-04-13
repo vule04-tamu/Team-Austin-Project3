@@ -19,9 +19,13 @@ VALUES
     ('Sugar Level', '75%', 0.00, NULL, 1.0),
     ('Sugar Level', '100%', 0.00, NULL, 1.0);
 
--- Remove discontinued drink from catalog if never ordered
+-- Remove Matcha Dreamcicle from customization_options
+DELETE FROM customization_options
+WHERE lower(name) LIKE '%dream%';
+
+-- Remove discontinued drink from menu_items if never ordered
 DELETE FROM menu_items mi
-WHERE lower(mi.name) LIKE '%dreamsicle%'
+WHERE lower(mi.name) LIKE '%dream%'
   AND NOT EXISTS (
       SELECT 1 FROM order_items oi WHERE oi.menu_item_id = mi.id
   );
