@@ -59,13 +59,13 @@ export default function Menu() {
   return (
     <div className="menu-wrap">
       <header className="menu-header">
-        <h1 className="shop-name">Boba Shop</h1>
+        <h1 className="shop-name">Austin's Boba Shop</h1>
         <div className="divider">
           <span className="divider-line" />
           <span className="divider-dot" />
           <span className="divider-line" />
         </div>
-        <p className="shop-tagline">Handcrafted drinks · Made with love</p>
+        <p className="shop-tagline">Handcrafted drinks</p>
       </header>
 
       {SECTIONS.map(({ label, names }) => {
