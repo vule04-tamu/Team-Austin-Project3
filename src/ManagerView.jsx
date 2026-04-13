@@ -288,7 +288,7 @@ export default function ManagerView() {
                     body: JSON.stringify({
                         name: newMenuName,
                         price: Number(newMenuPrice),
-                        customization: newMenuCustomizable,
+                        customizable: newMenuCustomizable,
                         ingredients: parseIngredients(),
                     }),
                 });
@@ -595,7 +595,7 @@ export default function ManagerView() {
                                     </p>
                                     <p className="featured-meta">
                                         Customizable:{" "}
-                                        <strong>{featuredMenuItem.customization ? "Yes" : "No"}</strong>
+                                        <strong>{featuredMenuItem.customizable ? "Yes" : "No"}</strong>
                                     </p>
                                 </div>
                             )}
@@ -739,7 +739,7 @@ export default function ManagerView() {
                                                         }
                                                     />
                                                 </td>
-                                                <td>{item.customization ? "Yes" : "No"}</td>
+                                                <td>{item.customizable ? "Yes" : "No"}</td>
                                                 <td>
                                                     <div className="row-actions">
                                                         <button

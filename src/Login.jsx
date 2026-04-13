@@ -17,7 +17,8 @@ function Login() {
     setError('')
 
     if (role === 'customer') {
-      navigate ('/customer')
+      navigate('/customer')
+      return
     }
 
     if (!username || !password) {

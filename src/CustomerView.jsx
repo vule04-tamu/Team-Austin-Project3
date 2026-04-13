@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CustomerView.css";
 
@@ -47,13 +47,15 @@ const SECTIONS = [
     },
 ];
 
-const ICE_OPTIONS = ["No Ice", "Light Ice"];
-const SUGAR_OPTIONS = ["No Sugar", "Light Sugar", "Extra Sugar"];
+function newLineId() {
+    return crypto.randomUUID();
+}
 
 export default function CustomerView() {
     const navigate = useNavigate();
 
     const [menuItems, setMenuItems] = useState([]);
+    const [customizationOptions, setCustomizationOptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -65,16 +67,24 @@ export default function CustomerView() {
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [orderNumber, setOrderNumber] = useState(null);
 
-    const [selectedIce, setSelectedIce] = useState(null);
-    const [selectedSugar, setSelectedSugar] = useState(null);
+    const [customizeModal, setCustomizeModal] = useState(null);
+    const [pendingCustomIds, setPendingCustomIds] = useState([]);
 
     useEffect(() => {
         (async () => {
             try {
-                const res = await fetch(`${API_BASE}/api/menu`);
-                if (!res.ok) throw new Error("Failed to load menu");
-                const data = await res.json();
+                const [menuRes, optRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/menu`),
+                    fetch(`${API_BASE}/api/menu/customizations`),
+                ]);
+                if (!menuRes.ok) throw new Error("Failed to load menu");
+                const data = await menuRes.json();
                 setMenuItems(data);
+                if (optRes.ok) {
+                    setCustomizationOptions(await optRes.json());
+                } else {
+                    setCustomizationOptions([]);
+                }
             } catch (e) {
                 setError(e.message);
             } finally {
@@ -83,32 +93,110 @@ export default function CustomerView() {
         })();
     }, []);
 
+    const optionsByCategory = useMemo(() => {
+        const m = new Map();
+        for (const o of customizationOptions) {
+            const k = o.category || "Other";
+            if (!m.has(k)) m.set(k, []);
+            m.get(k).push(o);
+        }
+        return m;
+    }, [customizationOptions]);
+
     const showToast = useCallback((msg) => {
         setToast(msg);
         setTimeout(() => setToast(null), 2800);
     }, []);
 
-    const addToCart = (item) => {
+    const lineUnitPrice = useCallback(
+        (line) => {
+            let p = Number(line.price) || 0;
+            for (const id of line.customizationIds || []) {
+                const opt = customizationOptions.find((o) => o.id === id);
+                if (opt) p += Number(opt.priceModifier) || 0;
+            }
+            return p;
+        },
+        [customizationOptions],
+    );
+
+    const pushLine = useCallback((item, customizationIds) => {
         setCart((prev) => {
-            const existing = prev.find((c) => c.id === item.id);
-            if (existing) return prev.map((c) => c.id === item.id ? { ...c, qty: c.qty + 1 } : c);
-            return [...prev, { ...item, qty: 1 }];
+            const hasMods = (customizationIds || []).length > 0;
+            const customizable = Boolean(item.customizable);
+            if (!customizable && !hasMods) {
+                const existing = prev.find(
+                    (c) =>
+                        c.id === item.id &&
+                        !(c.customizationIds && c.customizationIds.length),
+                );
+                if (existing) {
+                    return prev.map((c) =>
+                        c.lineId === existing.lineId
+                            ? { ...c, qty: c.qty + 1 }
+                            : c,
+                    );
+                }
+            }
+            return [
+                ...prev,
+                {
+                    ...item,
+                    lineId: newLineId(),
+                    qty: 1,
+                    customizationIds: [...(customizationIds || [])],
+                },
+            ];
         });
         showToast(`Added ${item.name}!`);
+    }, [showToast]);
+
+    const onDrinkClick = (item) => {
+        if (item.customizable) {
+            setCustomizeModal({ item });
+            setPendingCustomIds([]);
+            return;
+        }
+        pushLine(item, []);
     };
 
-    const changeQty = (id, delta) => {
+    const confirmCustomize = () => {
+        if (!customizeModal) return;
+        pushLine(customizeModal.item, pendingCustomIds);
+        setCustomizeModal(null);
+        setPendingCustomIds([]);
+    };
+
+    const togglePendingOption = (id) => {
+        setPendingCustomIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+        );
+    };
+
+    const changeQty = (lineId, delta) => {
         setCart((prev) =>
-            prev.map((c) => c.id === id ? { ...c, qty: c.qty + delta } : c)
+            prev
+                .map((c) =>
+                    c.lineId === lineId ? { ...c, qty: c.qty + delta } : c,
+                )
                 .filter((c) => c.qty > 0),
         );
     };
 
     const totalItems = cart.reduce((s, c) => s + c.qty, 0);
-    const subtotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const subtotal = cart.reduce((s, c) => s + lineUnitPrice(c) * c.qty, 0);
     const tax = subtotal * TAX_RATE;
     const total = subtotal + tax;
     const fmt = (n) => `$${n.toFixed(2)}`;
+
+    const customizationSummary = (line) => {
+        const ids = line.customizationIds || [];
+        if (!ids.length) return null;
+        return ids
+            .map((id) => customizationOptions.find((o) => o.id === id)?.name)
+            .filter(Boolean)
+            .join(", ");
+    };
 
     const handlePay = async () => {
         setPaying(true);
@@ -117,17 +205,21 @@ export default function CustomerView() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    cart: cart.map((c) => ({ menuItemId: c.id, price: c.price, qty: c.qty })),
+                    cart: cart.map((c) => ({
+                        menuItemId: c.id,
+                        price: lineUnitPrice(c),
+                        qty: c.qty,
+                        customizationIds: c.customizationIds || [],
+                    })),
                     paymentMethod: payMethod,
-                    customizations: { ice: selectedIce, sugar: selectedSugar },
                 }),
             });
-            if (!res.ok) throw new Error("Order failed");
             const data = await res.json().catch(() => ({}));
-            setOrderNumber(data.orderNumber || Math.floor(1000 + Math.random() * 9000));
+            if (!res.ok) {
+                throw new Error(data.error || "Order failed");
+            }
+            setOrderNumber(data.orderNumber ?? data.orderId ?? Math.floor(1000 + Math.random() * 9000));
             setCart([]);
-            setSelectedIce(null);
-            setSelectedSugar(null);
             setShowPayModal(false);
             setOrderSuccess(true);
         } catch (e) {
@@ -164,7 +256,7 @@ export default function CustomerView() {
                 <h2>Order Placed!</h2>
                 <p>Your boba is being prepared with love ✨</p>
                 <div className="kiosk-success-order">Order #{orderNumber}</div>
-                <button className="kiosk-new-order-btn" onClick={() => { setOrderSuccess(false); setOrderNumber(null); }}>
+                <button type="button" className="kiosk-new-order-btn" onClick={() => { setOrderSuccess(false); setOrderNumber(null); }}>
                     Start New Order
                 </button>
             </div>
@@ -177,13 +269,14 @@ export default function CustomerView() {
                 <div className="kiosk-brand">
                     <span className="kiosk-brand-icon">🧋</span>
                     <div>
-                        <div className="kiosk-brand-name">Austin's Boba Shop</div>
+                        <div className="kiosk-brand-name">{"Austin's Boba Shop"}</div>
                         <div className="kiosk-brand-sub">Order Here</div>
                     </div>
                 </div>
                 <div className="kiosk-header-right">
-                    <button className="kiosk-back-btn" onClick={() => navigate("/")}>← Back</button>
+                    <button type="button" className="kiosk-back-btn" onClick={() => navigate("/")}>← Back</button>
                     <button
+                        type="button"
                         className="kiosk-cart-btn"
                         onClick={() => cart.length > 0 ? setShowPayModal(true) : showToast("Add something first! 🧋")}
                     >
@@ -214,23 +307,29 @@ export default function CustomerView() {
                                 </div>
                                 <div className="kiosk-grid">
                                     {section.items.map((item) => {
-                                        const inCart = cart.find((c) => c.id === item.id);
+                                        const inCart = cart.find((c) => c.id === item.id && !(c.customizationIds?.length));
                                         const color = cardColor(item.id);
                                         return (
-                                            <div key={item.id} className="kiosk-card" onClick={() => addToCart(item)}>
+                                            <div key={item.id} className="kiosk-card" onClick={() => onDrinkClick(item)}>
                                                 <div className="kiosk-card-banner" style={{ background: color }} />
                                                 <div className="kiosk-card-body">
                                                     <div className="kiosk-card-name">{item.name}</div>
                                                     <div className="kiosk-card-footer">
                                                         <span className="kiosk-card-price">{fmt(item.price)}</span>
                                                         <button
+                                                            type="button"
                                                             className="kiosk-card-add"
                                                             style={{ background: color }}
-                                                            onClick={(e) => { e.stopPropagation(); addToCart(item); }}
+                                                            onClick={(e) => { e.stopPropagation(); onDrinkClick(item); }}
                                                         >+</button>
                                                     </div>
                                                 </div>
-                                                {inCart && <div className="kiosk-card-tag">In Cart: {inCart.qty}</div>}
+                                                {item.customizable && (
+                                                    <div className="kiosk-card-tag subtle">Tap to customize</div>
+                                                )}
+                                                {inCart && !item.customizable && (
+                                                    <div className="kiosk-card-tag">In Cart: {inCart.qty}</div>
+                                                )}
                                             </div>
                                         );
                                     })}
@@ -238,55 +337,6 @@ export default function CustomerView() {
                             </div>
                         );
                     })}
-
-                    <div className="kiosk-section">
-                        <div className="kiosk-section-heading">
-                            <h2
-                                className="kiosk-section-title"
-                                style={{ backgroundImage: "linear-gradient(135deg, #4cc9f0, #4361ee)" }}
-                            >
-                                Ice &amp; Sugar Customizations
-                            </h2>
-                        </div>
-                        <div className="kiosk-custom-panel">
-                            <div className="kiosk-custom-group">
-                                <div className="kiosk-custom-group-label">🧊 Ice</div>
-                                <div className="kiosk-custom-options">
-                                    {ICE_OPTIONS.map((opt) => (
-                                        <label key={opt} className="kiosk-custom-option">
-                                            <input
-                                                type="radio"
-                                                name="ice"
-                                                checked={selectedIce === opt}
-                                                onChange={() => setSelectedIce(opt)}
-                                                onClick={() => { if (selectedIce === opt) setSelectedIce(null); }}
-                                            />
-                                            <span className="kiosk-custom-radio-box" />
-                                            <span className="kiosk-custom-option-label">{opt}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                            <div className="kiosk-custom-group">
-                                <div className="kiosk-custom-group-label">🍬 Sugar</div>
-                                <div className="kiosk-custom-options">
-                                    {SUGAR_OPTIONS.map((opt) => (
-                                        <label key={opt} className="kiosk-custom-option">
-                                            <input
-                                                type="radio"
-                                                name="sugar"
-                                                checked={selectedSugar === opt}
-                                                onChange={() => setSelectedSugar(opt)}
-                                                onClick={() => { if (selectedSugar === opt) setSelectedSugar(null); }}
-                                            />
-                                            <span className="kiosk-custom-radio-box" />
-                                            <span className="kiosk-custom-option-label">{opt}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <aside className="kiosk-cart">
@@ -304,30 +354,28 @@ export default function CustomerView() {
                                 <p>Nothing here yet!<br />Tap a drink to add it.</p>
                             </div>
                         ) : (
-                            cart.map((item) => (
-                                <div key={item.id} className="kiosk-cart-item">
+                            cart.map((item) => {
+                                const csum = customizationSummary(item);
+                                return (
+                                <div key={item.lineId} className="kiosk-cart-item">
                                     <div className="kiosk-cart-item-dot" style={{ background: cardColor(item.id) }} />
                                     <div className="kiosk-cart-item-info">
                                         <div className="kiosk-cart-item-name">{item.name}</div>
-                                        <div className="kiosk-cart-item-price">{fmt(item.price)} each</div>
+                                        {csum && (
+                                            <div className="kiosk-cart-item-custom">{csum}</div>
+                                        )}
+                                        <div className="kiosk-cart-item-price">{fmt(lineUnitPrice(item))} each</div>
                                     </div>
                                     <div className="kiosk-cart-item-controls">
-                                        <button className="kiosk-qty-btn" onClick={() => changeQty(item.id, -1)}>−</button>
+                                        <button type="button" className="kiosk-qty-btn" onClick={() => changeQty(item.lineId, -1)}>−</button>
                                         <span className="kiosk-qty-num">{item.qty}</span>
-                                        <button className="kiosk-qty-btn" onClick={() => changeQty(item.id, 1)}>+</button>
+                                        <button type="button" className="kiosk-qty-btn" onClick={() => changeQty(item.lineId, 1)}>+</button>
                                     </div>
                                 </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
-
-                    {(selectedIce || selectedSugar) && (
-                        <div className="kiosk-cart-customizations">
-                            <div className="kiosk-cart-custom-title">🧊 Customizations</div>
-                            {selectedIce && <div className="kiosk-cart-custom-tag">🧊 {selectedIce}</div>}
-                            {selectedSugar && <div className="kiosk-cart-custom-tag">🍬 {selectedSugar}</div>}
-                        </div>
-                    )}
 
                     {cart.length > 0 && (
                         <>
@@ -346,7 +394,7 @@ export default function CustomerView() {
                                     <span className="kiosk-totals-total-val">{fmt(total)}</span>
                                 </div>
                             </div>
-                            <button className="kiosk-order-btn" onClick={() => setShowPayModal(true)}>
+                            <button type="button" className="kiosk-order-btn" onClick={() => setShowPayModal(true)}>
                                 Place Order →
                             </button>
                         </>
@@ -354,18 +402,54 @@ export default function CustomerView() {
                 </aside>
             </div>
 
+            {customizeModal && (
+                <div
+                    className="kiosk-modal-backdrop"
+                    role="presentation"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setCustomizeModal(null);
+                            setPendingCustomIds([]);
+                        }
+                    }}
+                >
+                    <div className="kiosk-modal kiosk-customize-modal">
+                        <p className="kiosk-modal-title">Customize {customizeModal.item.name}</p>
+                        <div className="kiosk-customize-scroll">
+                            {[...optionsByCategory.entries()].map(([cat, opts]) => (
+                                <div key={cat} className="kiosk-customize-block">
+                                    <div className="kiosk-customize-cat">{cat}</div>
+                                    <div className="kiosk-customize-chips">
+                                        {opts.map((o) => (
+                                            <button
+                                                type="button"
+                                                key={o.id}
+                                                className={`kiosk-chip ${pendingCustomIds.includes(o.id) ? "on" : ""}`}
+                                                onClick={() => togglePendingOption(o.id)}
+                                            >
+                                                {o.name}
+                                                {Number(o.priceModifier) > 0 && (
+                                                    <span> +{fmt(o.priceModifier)}</span>
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="kiosk-modal-actions">
+                            <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); }}>Cancel</button>
+                            <button type="button" className="kiosk-modal-confirm" onClick={confirmCustomize}>Add to cart</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showPayModal && (
-                <div className="kiosk-modal-backdrop" onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
+                <div className="kiosk-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
                     <div className="kiosk-modal">
                         <p className="kiosk-modal-title">Almost there! 🎉</p>
                         <p className="kiosk-modal-total">{fmt(total)}</p>
-
-                        {(selectedIce || selectedSugar) && (
-                            <div className="kiosk-modal-custom-summary">
-                                {selectedIce && <span className="kiosk-modal-custom-tag">🧊 {selectedIce}</span>}
-                                {selectedSugar && <span className="kiosk-modal-custom-tag">🍬 {selectedSugar}</span>}
-                            </div>
-                        )}
 
                         <p className="kiosk-modal-label">How would you like to pay?</p>
                         <div className="kiosk-pay-methods">
@@ -374,7 +458,7 @@ export default function CustomerView() {
                                 { key: "CARD", label: "Card", icon: "💳" },
                                 { key: "MOBILE", label: "Mobile", icon: "📱" },
                             ].map((m) => (
-                                <button key={m.key} className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`} onClick={() => setPayMethod(m.key)}>
+                                <button type="button" key={m.key} className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`} onClick={() => setPayMethod(m.key)}>
                                     <span className="pay-icon">{m.icon}</span>
                                     {m.label}
                                 </button>
@@ -382,8 +466,8 @@ export default function CustomerView() {
                         </div>
 
                         <div className="kiosk-modal-actions">
-                            <button className="kiosk-modal-cancel" onClick={() => setShowPayModal(false)}>Go Back</button>
-                            <button className="kiosk-modal-confirm" onClick={handlePay} disabled={paying}>
+                            <button type="button" className="kiosk-modal-cancel" onClick={() => setShowPayModal(false)}>Go Back</button>
+                            <button type="button" className="kiosk-modal-confirm" onClick={handlePay} disabled={paying}>
                                 {paying ? "Processing…" : "Confirm Order"}
                             </button>
                         </div>

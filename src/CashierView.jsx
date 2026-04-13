@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import "./CashierView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
-// Deterministic color per item id
 const ITEM_COLORS = [
     "#f59e0b",
     "#ef4444",
@@ -21,9 +20,14 @@ const itemColor = (id) => ITEM_COLORS[id % ITEM_COLORS.length];
 
 const TAX_RATE = 0.0825;
 
+function newLineId() {
+    return crypto.randomUUID();
+}
+
 export default function CashierView() {
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const [menuItems, setMenuItems] = useState([]);
+    const [customizationOptions, setCustomizationOptions] = useState([]);
     const [categories, setCategories] = useState([]);
     const [activeCategory, setActiveCategory] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -37,17 +41,27 @@ export default function CashierView() {
     const [paying, setPaying] = useState(false);
     const [toast, setToast] = useState(null);
 
-    // ── Fetch menu ────────────────────────────────────
+    const [customizeModal, setCustomizeModal] = useState(null);
+    const [pendingCustomIds, setPendingCustomIds] = useState([]);
+
     useEffect(() => {
         (async () => {
             try {
-                const res = await fetch(`${API_BASE}/api/menu`);
-                if (!res.ok) throw new Error("Failed to load menu");
-                const data = await res.json();
+                const [menuRes, optRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/menu`),
+                    fetch(`${API_BASE}/api/menu/customizations`),
+                ]);
+                if (!menuRes.ok) throw new Error("Failed to load menu");
+                const data = await menuRes.json();
                 setMenuItems(data);
 
-                // Build unique category list — using first word as mock section
-                // In a real app the menu_items table would have a category column
+                if (optRes.ok) {
+                    const opts = await optRes.json();
+                    setCustomizationOptions(opts);
+                } else {
+                    setCustomizationOptions([]);
+                }
+
                 const cats = [
                     ...new Set(data.map((i) => i.category || "All Items")),
                 ];
@@ -61,43 +75,104 @@ export default function CashierView() {
         })();
     }, []);
 
+    const optionsByCategory = useMemo(() => {
+        const m = new Map();
+        for (const o of customizationOptions) {
+            const k = o.category || "Other";
+            if (!m.has(k)) m.set(k, []);
+            m.get(k).push(o);
+        }
+        return m;
+    }, [customizationOptions]);
+
     const showToast = useCallback((msg) => {
         setToast(msg);
         setTimeout(() => setToast(null), 2800);
     }, []);
 
-    // ── Cart helpers ──────────────────────────────────
-    const addToCart = (item) => {
-        setCart((prev) => {
-            const existing = prev.find((c) => c.id === item.id);
-            if (existing) {
-                return prev.map((c) =>
-                    c.id === item.id ? { ...c, qty: c.qty + selectedQty } : c,
-                );
+    const lineUnitPrice = useCallback(
+        (line) => {
+            let p = Number(line.price) || 0;
+            for (const id of line.customizationIds || []) {
+                const opt = customizationOptions.find((o) => o.id === id);
+                if (opt) p += Number(opt.priceModifier) || 0;
             }
-            return [...prev, { ...item, qty: selectedQty }];
+            return p;
+        },
+        [customizationOptions],
+    );
+
+    const pushLine = useCallback((item, customizationIds) => {
+        setCart((prev) => {
+            const hasMods = (customizationIds || []).length > 0;
+            const customizable = Boolean(item.customizable);
+            if (!customizable && !hasMods) {
+                const existing = prev.find(
+                    (c) =>
+                        c.id === item.id &&
+                        !(c.customizationIds && c.customizationIds.length),
+                );
+                if (existing) {
+                    return prev.map((c) =>
+                        c.lineId === existing.lineId
+                            ? { ...c, qty: c.qty + selectedQty }
+                            : c,
+                    );
+                }
+            }
+            return [
+                ...prev,
+                {
+                    ...item,
+                    lineId: newLineId(),
+                    qty: selectedQty,
+                    customizationIds: [...(customizationIds || [])],
+                },
+            ];
         });
+    }, [selectedQty]);
+
+    const onMenuCardClick = (item) => {
+        if (item.customizable) {
+            setCustomizeModal({ item });
+            setPendingCustomIds([]);
+            return;
+        }
+        pushLine(item, []);
     };
 
-    const changeQty = (id, delta) => {
+    const confirmCustomize = () => {
+        if (!customizeModal) return;
+        pushLine(customizeModal.item, pendingCustomIds);
+        setCustomizeModal(null);
+        setPendingCustomIds([]);
+    };
+
+    const togglePendingOption = (id) => {
+        setPendingCustomIds((prev) =>
+            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+        );
+    };
+
+    const changeQty = (lineId, delta) => {
         setCart((prev) =>
             prev
-                .map((c) => (c.id === id ? { ...c, qty: c.qty + delta } : c))
+                .map((c) =>
+                    c.lineId === lineId ? { ...c, qty: c.qty + delta } : c,
+                )
                 .filter((c) => c.qty > 0),
         );
     };
 
-    const removeItem = (id) =>
-        setCart((prev) => prev.filter((c) => c.id !== id));
+    const removeItem = (lineId) =>
+        setCart((prev) => prev.filter((c) => c.lineId !== lineId));
 
-    // ── Totals ────────────────────────────────────────
-    const subtotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
+    const subtotal = cart.reduce((s, c) => s + lineUnitPrice(c) * c.qty, 0);
     const tax = subtotal * TAX_RATE;
     const total = subtotal + tax;
 
     const fmt = (n) => `$${n.toFixed(2)}`;
 
-    // ── Submit order ──────────────────────────────────
     const handlePay = async () => {
         setPaying(true);
         try {
@@ -107,13 +182,17 @@ export default function CashierView() {
                 body: JSON.stringify({
                     cart: cart.map((c) => ({
                         menuItemId: c.id,
-                        price: c.price,
+                        price: lineUnitPrice(c),
                         qty: c.qty,
+                        customizationIds: c.customizationIds || [],
                     })),
                     paymentMethod: payMethod,
                 }),
             });
-            if (!res.ok) throw new Error("Order failed");
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || "Order failed");
+            }
             setCart([]);
             setShowPayModal(false);
             showToast("✓ Order placed successfully!");
@@ -124,7 +203,6 @@ export default function CashierView() {
         }
     };
 
-    // ── Filtered menu items ───────────────────────────
     const visibleItems =
         activeCategory === "All Items" || activeCategory === null
             ? menuItems
@@ -132,7 +210,15 @@ export default function CashierView() {
                   (i) => (i.category || "All Items") === activeCategory,
               );
 
-    // ── Render ────────────────────────────────────────
+    const customizationSummary = (line) => {
+        const ids = line.customizationIds || [];
+        if (!ids.length) return null;
+        return ids
+            .map((id) => customizationOptions.find((o) => o.id === id)?.name)
+            .filter(Boolean)
+            .join(", ");
+    };
+
     if (loading)
         return (
             <div className="cashier-root">
@@ -154,7 +240,6 @@ export default function CashierView() {
 
     return (
         <div className="cashier-root">
-            {/* ── LEFT: Order Panel ── */}
             <aside className="order-panel">
                 <div className="order-header">
                     <h2>Order</h2>
@@ -176,8 +261,10 @@ export default function CashierView() {
                             </p>
                         </div>
                     ) : (
-                        cart.map((item) => (
-                            <div key={item.id} className="order-item-row">
+                        cart.map((item) => {
+                            const csum = customizationSummary(item);
+                            return (
+                            <div key={item.lineId} className="order-item-row">
                                 <div
                                     className="order-item-color"
                                     style={{ background: itemColor(item.id) }}
@@ -186,39 +273,49 @@ export default function CashierView() {
                                     <div className="order-item-name">
                                         {item.name}
                                     </div>
-                                    {item.customization && (
+                                    {csum && (
                                         <div className="order-item-note">
-                                            Customizable
+                                            {csum}
                                         </div>
                                     )}
                                 </div>
                                 <div className="order-item-qty">
                                     <button
+                                        type="button"
                                         className="qty-btn"
-                                        onClick={() => changeQty(item.id, -1)}
+                                        onClick={() =>
+                                            changeQty(item.lineId, -1)
+                                        }
                                     >
                                         −
                                     </button>
-                                    <span className="qty-num">x{item.qty}</span>
+                                    <span className="qty-num">
+                                        x{item.qty}
+                                    </span>
                                     <button
+                                        type="button"
                                         className="qty-btn"
-                                        onClick={() => changeQty(item.id, 1)}
+                                        onClick={() =>
+                                            changeQty(item.lineId, 1)
+                                        }
                                     >
                                         +
                                     </button>
                                 </div>
                                 <span className="order-item-price">
-                                    {fmt(item.price * item.qty)}
+                                    {fmt(lineUnitPrice(item) * item.qty)}
                                 </span>
                                 <button
+                                    type="button"
                                     className="remove-item-btn"
-                                    onClick={() => removeItem(item.id)}
+                                    onClick={() => removeItem(item.lineId)}
                                     title="Remove"
                                 >
                                     ✕
                                 </button>
                             </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 
@@ -240,6 +337,7 @@ export default function CashierView() {
 
                 <div className="order-actions">
                     <button
+                        type="button"
                         className="btn-save"
                         onClick={() => showToast("Order saved!")}
                         disabled={cart.length === 0}
@@ -247,6 +345,7 @@ export default function CashierView() {
                         Save
                     </button>
                     <button
+                        type="button"
                         className="btn-pay"
                         onClick={() => setShowPayModal(true)}
                         disabled={cart.length === 0}
@@ -256,10 +355,10 @@ export default function CashierView() {
                 </div>
             </aside>
 
-            {/* ── MIDDLE: Category Sidebar ── */}
             <nav className="category-sidebar">
                 {categories.map((cat) => (
                     <button
+                        type="button"
                         key={cat}
                         className={`category-btn ${activeCategory === cat ? "active" : ""}`}
                         onClick={() => setActiveCategory(cat)}
@@ -270,13 +369,13 @@ export default function CashierView() {
                 ))}
             </nav>
 
-            {/* ── RIGHT: Menu Grid ── */}
             <main className="menu-panel">
                 <div className="menu-toolbar">
                     <span className="toolbar-label">QTY</span>
                     <div className="qty-selector">
                         {[1, 2, 3, 4, 5, 6].map((n) => (
                             <button
+                                type="button"
                                 key={n}
                                 className={`qty-pill ${selectedQty === n ? "selected" : ""}`}
                                 onClick={() => setSelectedQty(n)}
@@ -285,7 +384,11 @@ export default function CashierView() {
                             </button>
                         ))}
                     </div>
-                    <button className="toolbar-custom-label logout-btn" onClick={() => navigate('/')} type="button">
+                    <button
+                        type="button"
+                        className="toolbar-custom-label logout-btn"
+                        onClick={() => navigate("/")}
+                    >
                         LOGOUT
                     </button>
                 </div>
@@ -300,11 +403,17 @@ export default function CashierView() {
                             {visibleItems.map((item) => (
                                 <div
                                     key={item.id}
-                                    className={`menu-card ${item.customization ? "customizable" : ""}`}
-                                    onClick={() => addToCart(item)}
+                                    role="button"
+                                    tabIndex={0}
+                                    className={`menu-card ${item.customizable ? "customizable" : ""}`}
+                                    onClick={() => onMenuCardClick(item)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ")
+                                            onMenuCardClick(item);
+                                    }}
                                     title={
-                                        item.customization
-                                            ? "Customizable item"
+                                        item.customizable
+                                            ? "Tap to customize"
                                             : ""
                                     }
                                 >
@@ -321,10 +430,93 @@ export default function CashierView() {
                 </div>
             </main>
 
-            {/* ── Payment Modal ── */}
+            {customizeModal && (
+                <div
+                    className="modal-backdrop"
+                    role="presentation"
+                    onClick={(e) => {
+                        if (e.target === e.currentTarget) {
+                            setCustomizeModal(null);
+                            setPendingCustomIds([]);
+                        }
+                    }}
+                >
+                    <div className="modal-card customize-modal-card">
+                        <p className="modal-title">
+                            Customize — {customizeModal.item.name}
+                        </p>
+                        <p className="modal-section-label">
+                            Select add-ons (optional)
+                        </p>
+                        <div className="customize-groups">
+                            {[...optionsByCategory.entries()].map(
+                                ([cat, opts]) => (
+                                    <div key={cat} className="customize-group">
+                                        <div className="customize-cat-label">
+                                            {cat}
+                                        </div>
+                                        <div className="customize-chips">
+                                            {opts.map((o) => (
+                                                <button
+                                                    type="button"
+                                                    key={o.id}
+                                                    className={`customize-chip ${pendingCustomIds.includes(o.id) ? "active" : ""}`}
+                                                    onClick={() =>
+                                                        togglePendingOption(o.id)
+                                                    }
+                                                >
+                                                    {o.name}
+                                                    {Number(o.priceModifier) >
+                                                        0 && (
+                                                        <span className="chip-price">
+                                                            {" "}
+                                                            +
+                                                            {fmt(
+                                                                o.priceModifier,
+                                                            )}
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ),
+                            )}
+                            {customizationOptions.length === 0 && (
+                                <p className="muted-hint">
+                                    No customization catalog loaded. Run DB
+                                    migration and ensure customization_options has
+                                    rows.
+                                </p>
+                            )}
+                        </div>
+                        <div className="modal-actions">
+                            <button
+                                type="button"
+                                className="modal-cancel-btn"
+                                onClick={() => {
+                                    setCustomizeModal(null);
+                                    setPendingCustomIds([]);
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="modal-confirm-btn"
+                                onClick={confirmCustomize}
+                            >
+                                Add to order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showPayModal && (
                 <div
                     className="modal-backdrop"
+                    role="presentation"
                     onClick={(e) => {
                         if (e.target === e.currentTarget)
                             setShowPayModal(false);
@@ -342,6 +534,7 @@ export default function CashierView() {
                                 { key: "MOBILE", label: "Mobile", icon: "📱" },
                             ].map((m) => (
                                 <button
+                                    type="button"
                                     key={m.key}
                                     className={`pay-method-btn ${payMethod === m.key ? "active" : ""}`}
                                     onClick={() => setPayMethod(m.key)}
@@ -354,12 +547,14 @@ export default function CashierView() {
 
                         <div className="modal-actions">
                             <button
+                                type="button"
                                 className="modal-cancel-btn"
                                 onClick={() => setShowPayModal(false)}
                             >
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 className="modal-confirm-btn"
                                 onClick={handlePay}
                                 disabled={paying}
@@ -373,7 +568,6 @@ export default function CashierView() {
                 </div>
             )}
 
-            {/* ── Toast ── */}
             {toast && <div className="toast">{toast}</div>}
         </div>
     );

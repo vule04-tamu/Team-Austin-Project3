@@ -8,34 +8,139 @@ orders_bp = Blueprint("orders", __name__)
 TAX_RATE = Decimal("0.0825")
 
 
+def _normalize_customization_ids(raw):
+    if not raw:
+        return []
+    if not isinstance(raw, list):
+        return []
+    out = []
+    for x in raw:
+        try:
+            out.append(int(x))
+        except (TypeError, ValueError):
+            continue
+    return list(dict.fromkeys(out))
+
+
+def _resolve_customization_ids_by_name(cur, ice_name, sugar_name):
+    """Map legacy kiosk string labels to customization_options ids."""
+    ids = []
+    for label in (ice_name, sugar_name):
+        if not label or not str(label).strip():
+            continue
+        cur.execute(
+            """
+            SELECT id FROM customization_options
+            WHERE lower(name) = lower(%s)
+            LIMIT 1
+            """,
+            (str(label).strip(),),
+        )
+        row = cur.fetchone()
+        if row:
+            ids.append(row[0])
+    return ids
+
+
+def _unit_price_for_line(cur, menu_item_id, customization_ids):
+    cur.execute("SELECT price FROM menu_items WHERE id = %s", (menu_item_id,))
+    row = cur.fetchone()
+    if not row:
+        raise ValueError(f"Unknown menu item id={menu_item_id}")
+    base = Decimal(str(row[0] or 0))
+    if not customization_ids:
+        return base
+    cur.execute(
+        """
+        SELECT COALESCE(SUM(price_modifier), 0)
+        FROM customization_options
+        WHERE id IN %s
+        """,
+        (tuple(customization_ids),),
+    )
+    mod = Decimal(str(cur.fetchone()[0] or 0))
+    return (base + mod).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+
+def _apply_customization_inventory(cur, menu_item_id, qty, customization_ids):
+    if not customization_ids:
+        return
+    cur.execute(
+        """
+        SELECT inventory_item_id, COALESCE(inventory_use_qty, 1)
+        FROM customization_options
+        WHERE id IN %s AND inventory_item_id IS NOT NULL
+        """,
+        (tuple(customization_ids),),
+    )
+    for inv_id, use_qty in cur.fetchall():
+        delta = Decimal(str(use_qty or 1)) * int(qty)
+        cur.execute(
+            """
+            UPDATE inventory_items
+            SET quantity = COALESCE(quantity, 0) - %s
+            WHERE id = %s
+            """,
+            (delta, inv_id),
+        )
+
+
 @orders_bp.route("", methods=["POST"])
 def submit_order():
     body = request.get_json(silent=True) or {}
     cart = body.get("cart", [])
     payment_method = body.get("paymentMethod", "CARD")
+    legacy_custom = body.get("customizations") or {}
 
     if not cart:
         return jsonify({"error": "Cart is empty."}), 400
 
-    gross = Decimal("0")
-    for item in cart:
-        price = Decimal(str(item["price"]))
-        qty = int(item["qty"])
-        gross += price * qty
-
-    tax = (gross * TAX_RATE).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-    net = (gross + tax).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-
     method_upper = payment_method.upper()
-    pay_cash   = net if method_upper == "CASH"   else Decimal("0")
-    pay_credit = net if method_upper == "CARD"   else Decimal("0")
-    pay_debit  = Decimal("0")
-    pay_other  = net if method_upper == "MOBILE" else Decimal("0")
 
     with get_connection() as conn:
         cur = conn.cursor()
         try:
-            # 1. Insert order
+            gross = Decimal("0")
+            normalized_lines = []
+
+            for item in cart:
+                menu_item_id = int(item["menuItemId"])
+                qty = int(item["qty"])
+                if qty < 1:
+                    return jsonify({"error": "Invalid quantity."}), 400
+
+                cids = _normalize_customization_ids(item.get("customizationIds"))
+                normalized_lines.append((menu_item_id, qty, cids))
+
+            legacy_ids = []
+            if legacy_custom:
+                legacy_ids = _resolve_customization_ids_by_name(
+                    cur,
+                    legacy_custom.get("ice"),
+                    legacy_custom.get("sugar"),
+                )
+            if legacy_ids:
+                normalized_lines = [
+                    (
+                        mid,
+                        q,
+                        _normalize_customization_ids(list(dict.fromkeys(lids + legacy_ids))),
+                    )
+                    for mid, q, lids in normalized_lines
+                ]
+
+            for menu_item_id, qty, cids in normalized_lines:
+                unit = _unit_price_for_line(cur, menu_item_id, cids)
+                gross += unit * qty
+
+            tax = (gross * TAX_RATE).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            net = (gross + tax).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+            pay_cash = net if method_upper == "CASH" else Decimal("0")
+            pay_credit = net if method_upper == "CARD" else Decimal("0")
+            pay_debit = Decimal("0")
+            pay_other = net if method_upper == "MOBILE" else Decimal("0")
+
             cur.execute(
                 "INSERT INTO orders(order_date, total_amount, payment_method) "
                 "VALUES(%s, %s, %s) RETURNING id",
@@ -43,18 +148,25 @@ def submit_order():
             )
             order_id = cur.fetchone()[0]
 
-            # 2. Insert order items
-            for item in cart:
+            for menu_item_id, qty, cids in normalized_lines:
                 cur.execute("SELECT COALESCE(MAX(id), 0) + 1 FROM order_items")
                 next_id = cur.fetchone()[0]
+                unit = _unit_price_for_line(cur, menu_item_id, cids)
                 cur.execute(
                     "INSERT INTO order_items(id, order_id, menu_item_id, quantity) "
                     "VALUES(%s, %s, %s, %s)",
-                    (next_id, order_id, item["menuItemId"], item["qty"]),
+                    (next_id, order_id, menu_item_id, qty),
                 )
+                for cid in cids:
+                    cur.execute(
+                        """
+                        INSERT INTO order_item_customizations
+                            (order_item_id, customization_option_id)
+                        VALUES (%s, %s)
+                        """,
+                        (next_id, cid),
+                    )
 
-            # 3. Decrement inventory via recipes
-            for item in cart:
                 cur.execute(
                     """
                     UPDATE inventory_items inv
@@ -63,10 +175,10 @@ def submit_order():
                     WHERE r.menu_item_id = %s
                       AND r.inventory_item_id = inv.id
                     """,
-                    (item["qty"], item["menuItemId"]),
+                    (qty, menu_item_id),
                 )
+                _apply_customization_inventory(cur, menu_item_id, qty, cids)
 
-            # 4. Update daily totals
             cur.execute(
                 """
                 UPDATE daily_totals
@@ -85,10 +197,22 @@ def submit_order():
             )
 
             conn.commit()
-            return jsonify({"success": True, "orderId": order_id}), 201
+            return jsonify({"success": True, "orderId": order_id, "orderNumber": order_id}), 201
 
-        except Exception:
+        except Exception as ex:
             conn.rollback()
+            err = str(ex)
+            el = err.lower()
+            if (
+                "order_item_customizations" in err
+                or "customization_options" in err
+                or 'column "customizable"' in el
+                or "undefinedcolumn" in el.replace(" ", "")
+            ):
+                return jsonify({
+                    "error": "Database migration required: run migrations/001_customization_schema.sql",
+                    "detail": err,
+                }), 503
             raise
         finally:
             cur.close()
@@ -233,12 +357,30 @@ def x_report():
         rows.append({
             "hour": f"{hour:02d}:00-{hour:02d}:59",
             **b,
+            "returnCount": 0,
+            "returnAmount": 0,
+            "voidCount": 0,
+            "voidAmount": 0,
+            "discardCount": 0,
+            "discardAmount": 0,
         })
 
     rows.append({
         "hour": "TOTAL",
         "salesCount": total_count,
         "salesAmount": round(total_sales, 2),
+        "cashCount": 0,
+        "cashAmount": 0,
+        "cardCount": 0,
+        "cardAmount": 0,
+        "mobileCount": 0,
+        "mobileAmount": 0,
+        "returnCount": 0,
+        "returnAmount": 0,
+        "voidCount": 0,
+        "voidAmount": 0,
+        "discardCount": 0,
+        "discardAmount": 0,
     })
 
     return jsonify(rows)

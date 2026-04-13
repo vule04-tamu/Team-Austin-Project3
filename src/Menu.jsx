@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import "./Menu.css";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 export default function Menu() {
     const [menuItems, setMenuItems] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -10,7 +12,7 @@ export default function Menu() {
         const fetchMenu = async () => {
             try {
                 setLoading(true);
-                const response = await fetch("/api/menu");
+                const response = await fetch(`${API_BASE}/api/menu`);
                 if (!response.ok) {
                     throw new Error("Failed to fetch menu");
                 }
@@ -55,7 +57,7 @@ export default function Menu() {
                         <div key={item.id} className="menu-item">
                             <h3>{item.name}</h3>
                             <p className="price">${item.price.toFixed(2)}</p>
-                            {item.customization && (
+                            {item.customizable && (
                                 <span className="customizable-badge">
                                     Customizable
                                 </span>
