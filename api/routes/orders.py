@@ -240,6 +240,43 @@ def recent_orders():
     ])
 
 
+@orders_bp.route("/<int:order_id>", methods=["GET"])
+def get_order_detail(order_id):
+    with get_cursor() as cur:
+        cur.execute(
+            "SELECT id, order_date, total_amount, payment_method FROM orders WHERE id = %s",
+            (order_id,),
+        )
+        order_row = cur.fetchone()
+        if not order_row:
+            return jsonify({"error": "Order not found."}), 404
+
+        cur.execute(
+            "SELECT oi.menu_item_id, oi.quantity, m.name "
+            "FROM order_items oi "
+            "JOIN menu_items m ON oi.menu_item_id = m.id "
+            "WHERE oi.order_id = %s "
+            "ORDER BY oi.id",
+            (order_id,),
+        )
+        item_rows = cur.fetchall()
+
+    return jsonify({
+        "id": order_row[0],
+        "orderDate": order_row[1].isoformat() if order_row[1] else None,
+        "totalAmount": float(order_row[2]) if order_row[2] else 0,
+        "paymentMethod": order_row[3] or None,
+        "items": [
+            {
+                "menuItemId": r[0],
+                "quantity": int(r[1]),
+                "name": r[2] or "Unknown item",
+            }
+            for r in item_rows
+        ],
+    })
+
+
 @orders_bp.route("/sales-summary", methods=["GET"])
 def sales_summary():
     start = request.args.get("start")
