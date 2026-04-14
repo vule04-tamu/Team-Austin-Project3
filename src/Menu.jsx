@@ -64,6 +64,20 @@ export default function Menu() {
     fetchMenu();
   }, []);
 
+  const byName = Object.fromEntries(menuItems.map((item) => [item.name, item]));
+
+  const largeByBase = useMemo(() => {
+    const m = {};
+    for (const item of menuItems) {
+      if (item.name.endsWith(" (Large)")) {
+        m[item.name.slice(0, -" (Large)".length)] = item;
+      }
+    }
+    return m;
+  }, [menuItems]);
+
+  const fmt = (n) => `$${n.toFixed(2)}`;
+
   if (loading) {
     return (
       <div className="menu-wrap menu-board">
@@ -78,20 +92,6 @@ export default function Menu() {
       </div>
     );
   }
-
-  const byName = Object.fromEntries(menuItems.map((item) => [item.name, item]));
-
-  const largeByBase = useMemo(() => {
-    const m = {};
-    for (const item of menuItems) {
-      if (item.name.endsWith(" (Large)")) {
-        m[item.name.slice(0, -" (Large)".length)] = item;
-      }
-    }
-    return m;
-  }, [menuItems]);
-
-  const fmt = (n) => `$${n.toFixed(2)}`;
 
   return (
     <div className="menu-wrap menu-board">
