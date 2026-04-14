@@ -11,6 +11,7 @@ from api.routes.orders import orders_bp
 from api.routes.inventory import inventory_bp
 from api.routes.employees import employees_bp
 from api.routes.zreport import zreport_bp
+from api.routes.weather import weather_bp
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +22,7 @@ app.register_blueprint(orders_bp,    url_prefix="/api/orders")
 app.register_blueprint(inventory_bp, url_prefix="/api/inventory")
 app.register_blueprint(employees_bp, url_prefix="/api/employees")
 app.register_blueprint(zreport_bp,   url_prefix="/api/zreport")
+app.register_blueprint(weather_bp,   url_prefix="/api/weather")
 
 @app.route("/api/health")
 def health():
