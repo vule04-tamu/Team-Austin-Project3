@@ -50,6 +50,7 @@ export default function CashierView() {
 
     const [customizeModal, setCustomizeModal] = useState(null);
     const [pendingCustomIds, setPendingCustomIds] = useState([]);
+    const [pendingSize, setPendingSize] = useState("regular");
 
     useEffect(() => {
         (async () => {
@@ -91,6 +92,22 @@ export default function CashierView() {
         }
         return m;
     }, [customizationOptions]);
+
+    const sizeMap = useMemo(() => {
+        const m = new Map();
+        const LARGE = " (Large)";
+        for (const item of menuItems) {
+            if (item.name.endsWith(LARGE)) {
+                const base = item.name.slice(0, -LARGE.length);
+                if (!m.has(base)) m.set(base, {});
+                m.get(base).large = item;
+            } else {
+                if (!m.has(item.name)) m.set(item.name, {});
+                m.get(item.name).regular = item;
+            }
+        }
+        return m;
+    }, [menuItems]);
 
     const showToast = useCallback((msg) => {
         setToast(msg);
@@ -140,10 +157,15 @@ export default function CashierView() {
     }, [selectedQty]);
 
     const onMenuCardClick = (item) => {
-        if (item.customizable) {
-            setCustomizeModal({ item });
+        const variants = sizeMap.get(item.name);
+        const hasLarge = variants?.large != null;
+        if (item.customizable || hasLarge) {
+            setCustomizeModal({ item, variants: hasLarge ? variants : null });
+            setPendingSize("regular");
             setPendingCustomIds(
-                defaultCustomizationSelection(customizationOptions),
+                item.customizable
+                    ? defaultCustomizationSelection(customizationOptions)
+                    : [],
             );
             return;
         }
@@ -152,13 +174,17 @@ export default function CashierView() {
 
     const confirmCustomize = () => {
         if (!customizeModal) return;
-        const ids = ensureIceSugarDefaults(
-            pendingCustomIds,
-            customizationOptions,
-        );
-        pushLine(customizeModal.item, ids);
+        const ids = customizeModal.item.customizable
+            ? ensureIceSugarDefaults(pendingCustomIds, customizationOptions)
+            : pendingCustomIds;
+        const actualItem =
+            pendingSize === "large" && customizeModal.variants?.large
+                ? customizeModal.variants.large
+                : customizeModal.item;
+        pushLine(actualItem, ids);
         setCustomizeModal(null);
         setPendingCustomIds([]);
+        setPendingSize("regular");
     };
 
     const handleCustomizationClick = useCallback(
@@ -232,10 +258,14 @@ export default function CashierView() {
         }
     };
 
+    const baseItems = useMemo(
+        () => menuItems.filter((i) => !i.name.endsWith(" (Large)")),
+        [menuItems],
+    );
     const visibleItems =
         activeCategory === "All Items" || activeCategory === null
-            ? menuItems
-            : menuItems.filter(
+            ? baseItems
+            : baseItems.filter(
                   (i) => (i.category || "All Items") === activeCategory,
               );
 
@@ -467,6 +497,7 @@ export default function CashierView() {
                         if (e.target === e.currentTarget) {
                             setCustomizeModal(null);
                             setPendingCustomIds([]);
+                            setPendingSize("regular");
                         }
                     }}
                 >
@@ -475,10 +506,44 @@ export default function CashierView() {
                             Customize — {customizeModal.item.name}
                         </p>
                         <p className="modal-section-label">
-                            Ice &amp; sugar (one each) · toppings optional
+                            {customizeModal.variants ? "Pick a size" : ""}
+                            {customizeModal.variants && customizeModal.item.customizable ? " · " : ""}
+                            {customizeModal.item.customizable ? "ice & sugar (one each) · toppings optional" : ""}
                         </p>
                         <div className="customize-groups">
-                            {[...optionsByCategory.entries()].map(
+                            {customizeModal.variants && (
+                                <div className="customize-group">
+                                    <div className="customize-cat-label">
+                                        Size
+                                        <span className="customize-cat-hint"> — pick one</span>
+                                    </div>
+                                    <div
+                                        className="customize-chips customize-chips-exclusive"
+                                        role="radiogroup"
+                                        aria-label="Size"
+                                    >
+                                        <button
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={pendingSize === "regular"}
+                                            className={`customize-chip ${pendingSize === "regular" ? "active" : ""}`}
+                                            onClick={() => setPendingSize("regular")}
+                                        >
+                                            Regular — {fmt(customizeModal.item.price)}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={pendingSize === "large"}
+                                            className={`customize-chip ${pendingSize === "large" ? "active" : ""}`}
+                                            onClick={() => setPendingSize("large")}
+                                        >
+                                            Large — {fmt(customizeModal.variants.large.price)}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {customizeModal.item.customizable && [...optionsByCategory.entries()].map(
                                 ([cat, opts]) => (
                                     <div key={cat} className="customize-group">
                                         <div className="customize-cat-label">
@@ -547,13 +612,6 @@ export default function CashierView() {
                                     </div>
                                 ),
                             )}
-                            {customizationOptions.length === 0 && (
-                                <p className="muted-hint">
-                                    No customization catalog loaded. Run DB
-                                    migration and ensure customization_options has
-                                    rows.
-                                </p>
-                            )}
                         </div>
                         <div className="modal-actions">
                             <button
@@ -562,6 +620,7 @@ export default function CashierView() {
                                 onClick={() => {
                                     setCustomizeModal(null);
                                     setPendingCustomIds([]);
+                                    setPendingSize("regular");
                                 }}
                             >
                                 Cancel

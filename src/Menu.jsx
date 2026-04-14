@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import "./Menu.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -7,40 +7,22 @@ const SECTIONS = [
   {
     label: "Milk Teas",
     names: [
-      "Classic Milk Tea", "Classic Milk Tea (Large)",
-      "Jasmine Green Milk Tea", "Jasmine Green Milk Tea (Large)",
-      "Taro Milk Tea", "Taro Milk Tea (Large)",
-      "Thai Milk Tea", "Thai Milk Tea (Large)",
-      "Honey Milk Tea", "Honey Milk Tea (Large)",
-      "Brown Sugar Milk Tea", "Brown Sugar Milk Tea (Large)",
-      "Strawberry Milk Tea", "Strawberry Milk Tea (Large)",
-      "Wintermelon Milk Tea", "Wintermelon Milk Tea (Large)",
-      "Coffee Milk Tea", "Coffee Milk Tea (Large)",
-      "Coconut Milk Tea", "Coconut Milk Tea (Large)",
-      "Chocolate Milk Tea", "Chocolate Milk Tea (Large)",
-      "Oreo Milk Tea", "Oreo Milk Tea (Large)",
-      "March Milk Tea", "March Milk Tea (Large)",
+      "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea",
+      "Thai Milk Tea", "Honey Milk Tea", "Brown Sugar Milk Tea",
+      "Strawberry Milk Tea", "Wintermelon Milk Tea", "Coffee Milk Tea",
+      "Coconut Milk Tea", "Chocolate Milk Tea", "Oreo Milk Tea", "March Milk Tea",
     ]
   },
   {
     label: "Fruit, Green & Oolong Teas",
     names: [
-      "Mango Green Tea", "Mango Green Tea (Large)",
-      "Passion Fruit Tea", "Passion Fruit Tea (Large)",
-      "Lychee Green Tea", "Lychee Green Tea (Large)",
-      "Peach Oolong Tea", "Peach Oolong Tea (Large)",
-      "Wintermelon Tea", "Wintermelon Tea (Large)",
-      "Honey Lemon Tea", "Honey Lemon Tea (Large)",
-      "Mint Tea", "Mint Tea (Large)",
+      "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea",
+      "Peach Oolong Tea", "Wintermelon Tea", "Honey Lemon Tea", "Mint Tea",
     ]
   },
   {
     label: "Specialties & Other Drinks",
-    names: [
-      "Matcha Latte", "Matcha Latte (Large)",
-      "jayden special", "jayden special (Large)",
-      "Fresh Milk", "Fresh Milk (Large)",
-    ]
+    names: ["Matcha Latte", "jayden special", "Fresh Milk"]
   },
   {
     label: "Toppings / Add-ons",
@@ -99,6 +81,18 @@ export default function Menu() {
 
   const byName = Object.fromEntries(menuItems.map((item) => [item.name, item]));
 
+  const largeByBase = useMemo(() => {
+    const m = {};
+    for (const item of menuItems) {
+      if (item.name.endsWith(" (Large)")) {
+        m[item.name.slice(0, -" (Large)".length)] = item;
+      }
+    }
+    return m;
+  }, [menuItems]);
+
+  const fmt = (n) => `$${n.toFixed(2)}`;
+
   return (
     <div className="menu-wrap menu-board">
       <header className="menu-board-header">
@@ -119,17 +113,24 @@ export default function Menu() {
             <section key={label} className="menu-board-col">
               <h2 className="menu-board-col-title">{label}</h2>
               <div className="menu-board-items">
-                {items.map((item) => (
-                  <div key={item.id} className="menu-board-item">
-                    <p className="item-name">{item.name}</p>
-                    <div className="item-footer">
-                      <span className="item-price">${item.price.toFixed(2)}</span>
-                      {item.customizable && (
-                        <span className="item-badge">Custom</span>
-                      )}
+                {items.map((item) => {
+                  const lg = largeByBase[item.name];
+                  return (
+                    <div key={item.id} className="menu-board-item">
+                      <p className="item-name">{item.name}</p>
+                      <div className="item-footer">
+                        <span className="item-price">
+                          {lg
+                            ? `Reg ${fmt(item.price)} / Lg ${fmt(lg.price)}`
+                            : fmt(item.price)}
+                        </span>
+                        {item.customizable && (
+                          <span className="item-badge">Custom</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
           );

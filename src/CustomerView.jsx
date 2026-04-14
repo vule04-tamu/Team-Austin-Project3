@@ -27,19 +27,9 @@ const SECTIONS = [
         tabLabel: "Milk Teas",
         gradient: "#ff6b9d, #c77dff",
         names: [
-            "Classic Milk Tea", "Classic Milk Tea (Large)",
-            "Jasmine Green Milk Tea", "Jasmine Green Milk Tea (Large)",
-            "Taro Milk Tea", "Taro Milk Tea (Large)",
-            "Thai Milk Tea", "Thai Milk Tea (Large)",
-            "Honey Milk Tea", "Honey Milk Tea (Large)",
-            "Brown Sugar Milk Tea", "Brown Sugar Milk Tea (Large)",
-            "Strawberry Milk Tea", "Strawberry Milk Tea (Large)",
-            "Wintermelon Milk Tea", "Wintermelon Milk Tea (Large)",
-            "Coffee Milk Tea", "Coffee Milk Tea (Large)",
-            "Coconut Milk Tea", "Coconut Milk Tea (Large)",
-            "Chocolate Milk Tea", "Chocolate Milk Tea (Large)",
-            "Oreo Milk Tea", "Oreo Milk Tea (Large)",
-            "March Milk Tea", "March Milk Tea (Large)",
+            "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea", "Thai Milk Tea",
+            "Honey Milk Tea", "Brown Sugar Milk Tea", "Strawberry Milk Tea", "Wintermelon Milk Tea",
+            "Coffee Milk Tea", "Coconut Milk Tea", "Chocolate Milk Tea", "Oreo Milk Tea", "March Milk Tea",
         ],
     },
     {
@@ -48,13 +38,8 @@ const SECTIONS = [
         tabLabel: "Fruit & Tea",
         gradient: "#06d6a0, #4cc9f0",
         names: [
-            "Mango Green Tea", "Mango Green Tea (Large)",
-            "Passion Fruit Tea", "Passion Fruit Tea (Large)",
-            "Lychee Green Tea", "Lychee Green Tea (Large)",
-            "Peach Oolong Tea", "Peach Oolong Tea (Large)",
-            "Wintermelon Tea", "Wintermelon Tea (Large)",
-            "Honey Lemon Tea", "Honey Lemon Tea (Large)",
-            "Mint Tea", "Mint Tea (Large)",
+            "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea", "Peach Oolong Tea",
+            "Wintermelon Tea", "Honey Lemon Tea", "Mint Tea",
         ],
     },
     {
@@ -62,11 +47,7 @@ const SECTIONS = [
         label: "Specialties & Other Drinks",
         tabLabel: "Specialties",
         gradient: "#ffd166, #ff9f1c",
-        names: [
-            "Matcha Latte", "Matcha Latte (Large)",
-            "jayden special", "jayden special (Large)",
-            "Fresh Milk", "Fresh Milk (Large)",
-        ],
+        names: ["Matcha Latte", "jayden special", "Fresh Milk"],
     },
     {
         key: "toppings",
@@ -99,6 +80,7 @@ export default function CustomerView() {
 
     const [customizeModal, setCustomizeModal] = useState(null);
     const [pendingCustomIds, setPendingCustomIds] = useState([]);
+    const [pendingSize, setPendingSize] = useState("regular");
     const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
 
     useEffect(() => {
@@ -133,6 +115,22 @@ export default function CustomerView() {
         }
         return m;
     }, [customizationOptions]);
+
+    const sizeMap = useMemo(() => {
+        const m = new Map();
+        const LARGE = " (Large)";
+        for (const item of menuItems) {
+            if (item.name.endsWith(LARGE)) {
+                const base = item.name.slice(0, -LARGE.length);
+                if (!m.has(base)) m.set(base, {});
+                m.get(base).large = item;
+            } else {
+                if (!m.has(item.name)) m.set(item.name, {});
+                m.get(item.name).regular = item;
+            }
+        }
+        return m;
+    }, [menuItems]);
 
     const showToast = useCallback((msg) => {
         setToast(msg);
@@ -183,10 +181,15 @@ export default function CustomerView() {
     }, [showToast]);
 
     const onDrinkClick = (item) => {
-        if (item.customizable && customizationOptions.length > 0) {
-            setCustomizeModal({ item });
+        const variants = sizeMap.get(item.name);
+        const hasLarge = variants?.large != null;
+        if (item.customizable || hasLarge) {
+            setCustomizeModal({ item, variants: hasLarge ? variants : null });
+            setPendingSize("regular");
             setPendingCustomIds(
-                defaultCustomizationSelection(customizationOptions),
+                item.customizable
+                    ? defaultCustomizationSelection(customizationOptions)
+                    : [],
             );
             return;
         }
@@ -195,13 +198,17 @@ export default function CustomerView() {
 
     const confirmCustomize = () => {
         if (!customizeModal) return;
-        const ids = ensureIceSugarDefaults(
-            pendingCustomIds,
-            customizationOptions,
-        );
-        pushLine(customizeModal.item, ids);
+        const ids = customizeModal.item.customizable
+            ? ensureIceSugarDefaults(pendingCustomIds, customizationOptions)
+            : pendingCustomIds;
+        const actualItem =
+            pendingSize === "large" && customizeModal.variants?.large
+                ? customizeModal.variants.large
+                : customizeModal.item;
+        pushLine(actualItem, ids);
         setCustomizeModal(null);
         setPendingCustomIds([]);
+        setPendingSize("regular");
     };
 
     const handleCustomizationClick = useCallback(
@@ -522,16 +529,59 @@ export default function CustomerView() {
                         if (e.target === e.currentTarget) {
                             setCustomizeModal(null);
                             setPendingCustomIds([]);
+                            setPendingSize("regular");
                         }
                     }}
                 >
                     <div className="kiosk-modal kiosk-customize-modal">
-                        <p className="kiosk-modal-title">Customize {customizeModal.item.name}</p>
+                        <p className="kiosk-modal-title">
+                            Customize {customizeModal.item.name}
+                        </p>
                         <p className="kiosk-modal-label">
-                            Ice &amp; sugar: pick one each · toppings optional
+                            {customizeModal.variants
+                                ? "Pick a size"
+                                : ""}
+                            {customizeModal.variants && customizeModal.item.customizable
+                                ? " · "
+                                : ""}
+                            {customizeModal.item.customizable
+                                ? "ice & sugar: one each · toppings optional"
+                                : ""}
                         </p>
                         <div className="kiosk-customize-scroll">
-                            {[...optionsByCategory.entries()].map(([cat, opts]) => (
+                            {customizeModal.variants && (
+                                <div className="kiosk-customize-block">
+                                    <div className="kiosk-customize-cat">
+                                        Size
+                                        <span className="kiosk-customize-cat-hint"> — one only</span>
+                                    </div>
+                                    <div
+                                        className="kiosk-customize-chips kiosk-customize-chips-exclusive"
+                                        role="radiogroup"
+                                        aria-label="Size"
+                                    >
+                                        <button
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={pendingSize === "regular"}
+                                            className={`kiosk-chip ${pendingSize === "regular" ? "on" : ""}`}
+                                            onClick={() => setPendingSize("regular")}
+                                        >
+                                            Regular — {fmt(customizeModal.item.price)}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            role="radio"
+                                            aria-checked={pendingSize === "large"}
+                                            className={`kiosk-chip ${pendingSize === "large" ? "on" : ""}`}
+                                            onClick={() => setPendingSize("large")}
+                                        >
+                                            Large — {fmt(customizeModal.variants.large.price)}
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                            {customizeModal.item.customizable && [...optionsByCategory.entries()].map(([cat, opts]) => (
                                 <div key={cat} className="kiosk-customize-block">
                                     <div className="kiosk-customize-cat">
                                         {cat}
@@ -583,14 +633,9 @@ export default function CustomerView() {
                                     </div>
                                 </div>
                             ))}
-                            {customizationOptions.length === 0 && (
-                                <p style={{ color: "var(--boba-muted)", fontSize: 13 }}>
-                                    No customization options available yet.
-                                </p>
-                            )}
                         </div>
                         <div className="kiosk-modal-actions">
-                            <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); }}>Cancel</button>
+                            <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); setPendingSize("regular"); }}>Cancel</button>
                             <button type="button" className="kiosk-modal-confirm" onClick={confirmCustomize}>Add to cart</button>
                         </div>
                     </div>
