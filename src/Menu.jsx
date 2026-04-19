@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
+import { useLanguage } from "./LanguageSwitch";
+import LanguageSwitcher from "./LanguageSwitcher";
 import "./Menu.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
 const SECTIONS = [
   {
-    label: "Milk Teas",
+    labelKey: "sec_milk_teas",
     names: [
       "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea",
       "Thai Milk Tea", "Honey Milk Tea", "Brown Sugar Milk Tea",
@@ -14,23 +16,24 @@ const SECTIONS = [
     ]
   },
   {
-    label: "Fruit, Green & Oolong Teas",
+    labelKey: "sec_fruit_teas",
     names: [
       "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea",
       "Peach Oolong Tea", "Wintermelon Tea", "Honey Lemon Tea", "Mint Tea",
     ]
   },
   {
-    label: "Specialties & Other Drinks",
+    labelKey: "sec_specialties",
     names: ["Matcha Latte", "jayden special", "Fresh Milk"]
   },
   {
-    label: "Toppings / Add-ons",
+    labelKey: "sec_toppings",
     names: ["Boba Pearls", "Lychee Jelly"]
   }
 ];
 
 export default function Menu() {
+  const { t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -81,7 +84,7 @@ export default function Menu() {
   if (loading) {
     return (
       <div className="menu-wrap menu-board">
-        <p className="menu-status">Loading menu…</p>
+        <p className="menu-status">{t('loading_menu')}</p>
       </div>
     );
   }
@@ -95,23 +98,24 @@ export default function Menu() {
 
   return (
     <div className="menu-wrap menu-board">
+      <LanguageSwitcher />
       <header className="menu-board-header">
-        <h1 className="shop-name">{"Austin's Boba Shop"}</h1>
+        <h1 className="shop-name">{t('shop_name')}</h1>
         <div className="divider">
           <span className="divider-line" />
           <span className="divider-dot" />
           <span className="divider-line" />
         </div>
-        <p className="menu-board-tagline">Handcrafted drinks</p>
+        <p className="menu-board-tagline">{t('handcrafted')}</p>
       </header>
 
       <div className="menu-board-main">
-        {SECTIONS.map(({ label, names }) => {
+        {SECTIONS.map(({ labelKey, names }) => {
           const items = names.map((n) => byName[n]).filter(Boolean);
           if (items.length === 0) return null;
           return (
-            <section key={label} className="menu-board-col">
-              <h2 className="menu-board-col-title">{label}</h2>
+            <section key={labelKey} className="menu-board-col">
+              <h2 className="menu-board-col-title">{t(labelKey)}</h2>
               <div className="menu-board-items">
                 {items.map((item) => {
                   const lg = largeByBase[item.name];
@@ -121,11 +125,11 @@ export default function Menu() {
                       <div className="item-footer">
                         <span className="item-price">
                           {lg
-                            ? `Reg ${fmt(item.price)} / Lg ${fmt(lg.price)}`
+                            ? `${t('reg')} ${fmt(item.price)} / ${t('lg')} ${fmt(lg.price)}`
                             : fmt(item.price)}
                         </span>
                         {item.customizable && (
-                          <span className="item-badge">Custom</span>
+                          <span className="item-badge">{t('custom_badge')}</span>
                         )}
                       </div>
                     </div>
@@ -137,7 +141,7 @@ export default function Menu() {
         })}
       </div>
 
-      <p className="menu-board-footer">Ask your barista to customize any drink</p>
+      <p className="menu-board-footer">{t('ask_barista')}</p>
     </div>
   );
 }

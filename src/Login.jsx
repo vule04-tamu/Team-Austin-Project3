@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useLanguage } from './LanguageSwitch'
+import LanguageSwitcher from './LanguageSwitcher'
 import './App.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || ''
 
 function Login() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
+  
   const [role, setRole] = useState('cashier')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -86,9 +90,10 @@ function Login() {
 
   return (
     <div className="login-page">
+      <LanguageSwitcher />
       <div className="login-card">
-        <h1 className="login-title">Austin's Boba Shop</h1>
-        <p className="login-subtitle">User Login</p>
+        <h1 className="login-title">{t('shop_name')}</h1>
+        <p className="login-subtitle">{t('user_login')}</p>
 
         <div className="role-selector">
           {['manager', 'cashier', 'customer'].map((r) => (
@@ -98,7 +103,7 @@ function Login() {
               onClick={() => { setRole(r); setError('') }}
               type="button"
             >
-              {r.charAt(0).toUpperCase() + r.slice(1)}
+              {t(r)}
             </button>
           ))}
         </div>
@@ -107,25 +112,25 @@ function Login() {
           {role !== 'customer' ? (
             <>
               <div className="field">
-                <label htmlFor="username">Username</label>
+                <label htmlFor="username">{t('username')}</label>
                 <input
                   id="username"
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
+                  placeholder={t('username_placeholder')}
                   autoComplete="username"
                 />
               </div>
 
               <div className="field">
-                <label htmlFor="password">Password</label>
+                <label htmlFor="password">{t('password')}</label>
                 <input
                   id="password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder={t('password_placeholder')}
                   autoComplete="current-password"
                 />
               </div>
@@ -133,12 +138,12 @@ function Login() {
           ) : (
             <>
               <p className="customer-note">
-                Welcome<br />
-                View the menu or continue as a customer to place an order
+                {t('customer_welcome')}<br />
+                {t('customer_note')}
               </p>
               
               <button type="button" className="login-btn menu-view-btn" onClick={() => navigate('/menu')}>
-                View Menu
+                {t('view_menu')}
               </button>
             </>
           )}
@@ -146,8 +151,8 @@ function Login() {
           {error && <p className="error-msg">{error}</p>}
 
           <button className="login-btn" type="submit" disabled={loading}>
-            {loading ? 'Signing in...' :
-              role === 'customer' ? 'Continue as Customer' : 'Sign In'}
+            {loading ? t('signing_in') :
+              role === 'customer' ? t('continue_as_customer') : t('sign_in')}
           </button>
         </form>
       </div>
@@ -156,9 +161,8 @@ function Login() {
         <div className="weather-container">
           {weather.daily.time.map((date, index) => (
             <div key={date} className="weather-card">
-              <div className="weather-date">{index === 0 ? 'Today' : formatDate(date)}</div>
+              <div className="weather-date">{index === 0 ? t('today') : formatDate(date)}</div>
               
-              {/* Current temp is only relevant for Today */}
               {index === 0 && weather.current && (
                 <div className="weather-current">
                   {Math.round(weather.current.temperature_2m)}°F
@@ -172,12 +176,12 @@ function Login() {
               </div>
 
               <div className="weather-precipitation">
-                💧 Rain: {weather.daily.precipitation_probability_max[index]}%
+                💧 {t('rain')}: {weather.daily.precipitation_probability_max[index]}%
               </div>
               
               <div className="weather-sun">
-                <span>🌅 Sunrise: {formatTime(weather.daily.sunrise[index])}</span>
-                <span>🌇 Sunset: {formatTime(weather.daily.sunset[index])}</span>
+                <span>🌅 {t('sunrise')}: {formatTime(weather.daily.sunrise[index])}</span>
+                <span>🌇 {t('sunset')}: {formatTime(weather.daily.sunset[index])}</span>
               </div>
             </div>
           ))}

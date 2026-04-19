@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "./LanguageSwitch";
+import LanguageSwitcher from "./LanguageSwitcher";
 import {
     defaultCustomizationSelection,
     ensureIceSugarDefaults,
@@ -23,8 +25,8 @@ const cardColor = (id) => CARD_COLORS[id % CARD_COLORS.length];
 const SECTIONS = [
     {
         key: "milk-teas",
-        label: "Milk Teas",
-        tabLabel: "Milk Teas",
+        labelKey: "sec_milk_teas",
+        tabKey: "sec_milk_teas",
         gradient: "#ff6b9d, #c77dff",
         names: [
             "Classic Milk Tea", "Jasmine Green Milk Tea", "Taro Milk Tea", "Thai Milk Tea",
@@ -34,8 +36,8 @@ const SECTIONS = [
     },
     {
         key: "fruit-teas",
-        label: "Fruit, Green, & Oolong Teas",
-        tabLabel: "Fruit & Tea",
+        labelKey: "sec_fruit_teas",
+        tabKey: "sec_fruit_tab",
         gradient: "#06d6a0, #4cc9f0",
         names: [
             "Mango Green Tea", "Passion Fruit Tea", "Lychee Green Tea", "Peach Oolong Tea",
@@ -44,15 +46,15 @@ const SECTIONS = [
     },
     {
         key: "specialties",
-        label: "Specialties & Other Drinks",
-        tabLabel: "Specialties",
+        labelKey: "sec_specialties",
+        tabKey: "sec_specialties_tab",
         gradient: "#ffd166, #ff9f1c",
         names: ["Matcha Latte", "jayden special", "Fresh Milk"],
     },
     {
         key: "toppings",
-        label: "Toppings / Add-ons",
-        tabLabel: "Toppings",
+        labelKey: "sec_toppings",
+        tabKey: "sec_toppings_tab",
         gradient: "#ff9f1c, #ef233c",
         names: ["Boba Pearls", "Lychee Jelly"],
     },
@@ -64,6 +66,7 @@ function newLineId() {
 
 export default function CustomerView() {
     const navigate = useNavigate();
+    const { t } = useLanguage();
 
     const [menuItems, setMenuItems] = useState([]);
     const [customizationOptions, setCustomizationOptions] = useState([]);
@@ -315,7 +318,7 @@ export default function CustomerView() {
         <div className="kiosk-root">
             <div className="kiosk-loading">
                 <div className="kiosk-spinner" />
-                <span>Loading menu…</span>
+                <span>{t('loading_menu')}</span>
             </div>
         </div>
     );
@@ -328,12 +331,13 @@ export default function CustomerView() {
 
     if (orderSuccess) return (
         <div className="kiosk-root">
+            <LanguageSwitcher />
             <div className="kiosk-success">
-                <h2>Order Placed!</h2>
-                <p>Thank you for your order!</p>
-                <div className="kiosk-success-order">Order #{orderNumber}</div>
+                <h2>{t('order_placed')}</h2>
+                <p>{t('thank_you')}</p>
+                <div className="kiosk-success-order">{t('order_number')}{orderNumber}</div>
                 <button type="button" className="kiosk-new-order-btn" onClick={() => { setOrderSuccess(false); setOrderNumber(null); }}>
-                    Start New Order
+                    {t('start_new')}
                 </button>
             </div>
         </div>
@@ -341,29 +345,30 @@ export default function CustomerView() {
 
     return (
         <div className="kiosk-root">
+            <LanguageSwitcher />
             <header className="kiosk-header">
                 <div className="kiosk-brand">
                     <div>
-                        <div className="kiosk-brand-name">{"Austin's Boba Shop"}</div>
-                        <div className="kiosk-brand-sub">Order Here</div>
+                        <div className="kiosk-brand-name">{t('shop_name')}</div>
+                        <div className="kiosk-brand-sub">{t('order_here')}</div>
                     </div>
                 </div>
                 <div className="kiosk-header-right">
-                    <button type="button" className="kiosk-back-btn" onClick={() => navigate("/")}>← Back</button>
+                    <button type="button" className="kiosk-back-btn" onClick={() => navigate("/")}>{t('back')}</button>
                     <button
                         type="button"
                         className="kiosk-cart-btn"
-                        onClick={() => cart.length > 0 ? setShowPayModal(true) : showToast("Add something first!")}
+                        onClick={() => cart.length > 0 ? setShowPayModal(true) : showToast(t('add_something_first'))}
                     >
-                        🛒 View Cart
+                        {t('view_cart')}
                         {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
                     </button>
                 </div>
             </header>
 
             <div className="kiosk-hero kiosk-hero-compact">
-                <h1>Welcome!</h1>
-                <p>Pick a category, then tap a drink</p>
+                <h1>{t('welcome')}</h1>
+                <p>{t('pick_category')}</p>
             </div>
 
             <div className="kiosk-body">
@@ -388,7 +393,7 @@ export default function CustomerView() {
                                     }
                                     onClick={() => setMenuTab(section.key)}
                                 >
-                                    {section.tabLabel ?? section.label}
+                                    {t(section.tabKey)}
                                 </button>
                             );
                         })}
@@ -396,7 +401,7 @@ export default function CustomerView() {
                     <div
                         className="kiosk-menu-tab-panel"
                         role="tabpanel"
-                        aria-label={activeSection?.label ?? "Menu"}
+                        aria-label={activeSection ? t(activeSection.labelKey) : "Menu"}
                     >
                         {activeSection && activeSection.items.length > 0 ? (
                             <div className="kiosk-grid">
@@ -441,12 +446,12 @@ export default function CustomerView() {
                                             {item.customizable &&
                                                 customizationOptions.length > 0 && (
                                                     <div className="kiosk-card-tag subtle">
-                                                        Tap to customize
+                                                        {t('tap_to_customize')}
                                                     </div>
                                                 )}
                                             {inCart && !item.customizable && (
                                                 <div className="kiosk-card-tag">
-                                                    In Cart: {inCart.qty}
+                                                    {t('in_cart')}: {inCart.qty}
                                                 </div>
                                             )}
                                         </div>
@@ -454,23 +459,23 @@ export default function CustomerView() {
                                 })}
                             </div>
                         ) : (
-                            <p className="kiosk-tab-empty">No drinks in this category.</p>
+                            <p className="kiosk-tab-empty">{t('no_drinks_cat')}</p>
                         )}
                     </div>
                 </div>
 
                 <aside className="kiosk-cart">
                     <div className="kiosk-cart-header">
-                        <h2 className="kiosk-cart-title">Your Order</h2>
+                        <h2 className="kiosk-cart-title">{t('your_order')}</h2>
                         {totalItems > 0 && (
-                            <span className="kiosk-cart-count">{totalItems} item{totalItems !== 1 ? "s" : ""}</span>
+                            <span className="kiosk-cart-count">{totalItems} {totalItems !== 1 ? t('items') : t('item')}</span>
                         )}
                     </div>
 
                     <div className="kiosk-cart-items">
                         {cart.length === 0 ? (
                             <div className="kiosk-cart-empty">
-                                <p>Nothing here yet!<br />Tap a drink to add it.</p>
+                                <p>{t('cart_empty_1')}<br />{t('cart_empty_2')}</p>
                             </div>
                         ) : (
                             cart.map((item) => {
@@ -483,7 +488,7 @@ export default function CustomerView() {
                                         {csum && (
                                             <div className="kiosk-cart-item-custom">{csum}</div>
                                         )}
-                                        <div className="kiosk-cart-item-price">{fmt(lineUnitPrice(item))} each</div>
+                                        <div className="kiosk-cart-item-price">{fmt(lineUnitPrice(item))} {t('each')}</div>
                                     </div>
                                     <div className="kiosk-cart-item-controls">
                                         <button type="button" className="kiosk-qty-btn" onClick={() => changeQty(item.lineId, -1)}>−</button>
@@ -500,21 +505,21 @@ export default function CustomerView() {
                         <>
                             <div className="kiosk-cart-totals">
                                 <div className="kiosk-totals-row">
-                                    <span className="kiosk-totals-label">Subtotal</span>
+                                    <span className="kiosk-totals-label">{t('subtotal')}</span>
                                     <span className="kiosk-totals-val">{fmt(subtotal)}</span>
                                 </div>
                                 <div className="kiosk-totals-row">
-                                    <span className="kiosk-totals-label">Tax (8.25%)</span>
+                                    <span className="kiosk-totals-label">{t('tax')}</span>
                                     <span className="kiosk-totals-val">{fmt(tax)}</span>
                                 </div>
                                 <hr className="kiosk-totals-divider" />
                                 <div className="kiosk-totals-total">
-                                    <span className="kiosk-totals-total-label">Total</span>
+                                    <span className="kiosk-totals-total-label">{t('total')}</span>
                                     <span className="kiosk-totals-total-val">{fmt(total)}</span>
                                 </div>
                             </div>
                             <button type="button" className="kiosk-order-btn" onClick={() => setShowPayModal(true)}>
-                                Place Order →
+                                {t('place_order')}
                             </button>
                         </>
                     )}
@@ -535,25 +540,25 @@ export default function CustomerView() {
                 >
                     <div className="kiosk-modal kiosk-customize-modal">
                         <p className="kiosk-modal-title">
-                            Customize {customizeModal.item.name}
+                            {t('customize')} {customizeModal.item.name}
                         </p>
                         <p className="kiosk-modal-label">
                             {customizeModal.variants
-                                ? "Pick a size"
+                                ? t('pick_size')
                                 : ""}
                             {customizeModal.variants && customizeModal.item.customizable
                                 ? " · "
                                 : ""}
                             {customizeModal.item.customizable
-                                ? "ice & sugar: one each · toppings optional"
+                                ? t('ice_sugar_hint')
                                 : ""}
                         </p>
                         <div className="kiosk-customize-scroll">
                             {customizeModal.variants && (
                                 <div className="kiosk-customize-block">
                                     <div className="kiosk-customize-cat">
-                                        Size
-                                        <span className="kiosk-customize-cat-hint"> — one only</span>
+                                        {t('size')}
+                                        <span className="kiosk-customize-cat-hint">{t('one_only')}</span>
                                     </div>
                                     <div
                                         className="kiosk-customize-chips kiosk-customize-chips-exclusive"
@@ -567,7 +572,7 @@ export default function CustomerView() {
                                             className={`kiosk-chip ${pendingSize === "regular" ? "on" : ""}`}
                                             onClick={() => setPendingSize("regular")}
                                         >
-                                            Regular — {fmt(customizeModal.item.price)}
+                                            {t('regular')} — {fmt(customizeModal.item.price)}
                                         </button>
                                         <button
                                             type="button"
@@ -576,7 +581,7 @@ export default function CustomerView() {
                                             className={`kiosk-chip ${pendingSize === "large" ? "on" : ""}`}
                                             onClick={() => setPendingSize("large")}
                                         >
-                                            Large — {fmt(customizeModal.variants.large.price)}
+                                            {t('large')} — {fmt(customizeModal.variants.large.price)}
                                         </button>
                                     </div>
                                 </div>
@@ -587,8 +592,7 @@ export default function CustomerView() {
                                         {cat}
                                         {isExclusiveCategory(cat) && (
                                             <span className="kiosk-customize-cat-hint">
-                                                {" "}
-                                                — one only
+                                                {t('one_only')}
                                             </span>
                                         )}
                                     </div>
@@ -635,8 +639,8 @@ export default function CustomerView() {
                             ))}
                         </div>
                         <div className="kiosk-modal-actions">
-                            <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); setPendingSize("regular"); }}>Cancel</button>
-                            <button type="button" className="kiosk-modal-confirm" onClick={confirmCustomize}>Add to cart</button>
+                            <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); setPendingSize("regular"); }}>{t('cancel')}</button>
+                            <button type="button" className="kiosk-modal-confirm" onClick={confirmCustomize}>{t('add_to_cart')}</button>
                         </div>
                     </div>
                 </div>
@@ -645,15 +649,15 @@ export default function CustomerView() {
             {showPayModal && (
                 <div className="kiosk-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
                     <div className="kiosk-modal">
-                        <p className="kiosk-modal-title">Almost there!</p>
+                        <p className="kiosk-modal-title">{t('almost_there')}</p>
                         <p className="kiosk-modal-total">{fmt(total)}</p>
 
-                        <p className="kiosk-modal-label">How would you like to pay?</p>
+                        <p className="kiosk-modal-label">{t('how_to_pay')}</p>
                         <div className="kiosk-pay-methods">
                             {[
-                                { key: "CASH", label: "Cash", icon: "💵" },
-                                { key: "CARD", label: "Card", icon: "💳" },
-                                { key: "MOBILE", label: "Mobile", icon: "📱" },
+                                { key: "CASH", label: t('pay_cash'), icon: "💵" },
+                                { key: "CARD", label: t('pay_card'), icon: "💳" },
+                                { key: "MOBILE", label: t('pay_mobile'), icon: "📱" },
                             ].map((m) => (
                                 <button type="button" key={m.key} className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`} onClick={() => setPayMethod(m.key)}>
                                     <span className="pay-icon">{m.icon}</span>
@@ -663,9 +667,9 @@ export default function CustomerView() {
                         </div>
 
                         <div className="kiosk-modal-actions">
-                            <button type="button" className="kiosk-modal-cancel" onClick={() => setShowPayModal(false)}>Go Back</button>
+                            <button type="button" className="kiosk-modal-cancel" onClick={() => setShowPayModal(false)}>{t('go_back')}</button>
                             <button type="button" className="kiosk-modal-confirm" onClick={handlePay} disabled={paying}>
-                                {paying ? "Processing…" : "Confirm Order"}
+                                {paying ? t('processing') : t('confirm_order')}
                             </button>
                         </div>
                     </div>
