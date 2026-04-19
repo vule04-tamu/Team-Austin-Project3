@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './App.css'
 
@@ -11,6 +11,22 @@ function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [weather, setWeather] = useState(null)
+
+  useEffect(() => {
+    async function fetchWeather() {
+      try {
+        const res = await fetch(`${API_BASE}/api/weather/current`)
+        if (res.ok) {
+          const data = await res.json()
+          setWeather(data)
+        }
+      } catch (err) {
+        console.error('Failed to fetch weather data:', err)
+      }
+    }
+    fetchWeather()
+  }, [])
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -56,6 +72,16 @@ function Login() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr + 'T12:00:00')
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+  }
+
+  const formatTime = (timeStr) => {
+    const date = new Date(timeStr)
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
   }
 
   return (
@@ -125,6 +151,38 @@ function Login() {
           </button>
         </form>
       </div>
+
+      {weather && weather.daily && (
+        <div className="weather-container">
+          {weather.daily.time.map((date, index) => (
+            <div key={date} className="weather-card">
+              <div className="weather-date">{index === 0 ? 'Today' : formatDate(date)}</div>
+              
+              {/* Current temp is only relevant for Today */}
+              {index === 0 && weather.current && (
+                <div className="weather-current">
+                  {Math.round(weather.current.temperature_2m)}°F
+                </div>
+              )}
+              
+              <div className="weather-highlow">
+                H: {Math.round(weather.daily.temperature_2m_max[index])}° 
+                &nbsp;|&nbsp; 
+                L: {Math.round(weather.daily.temperature_2m_min[index])}°
+              </div>
+
+              <div className="weather-precipitation">
+                💧 Rain: {weather.daily.precipitation_probability_max[index]}%
+              </div>
+              
+              <div className="weather-sun">
+                <span>🌅 Sunrise: {formatTime(weather.daily.sunrise[index])}</span>
+                <span>🌇 Sunset: {formatTime(weather.daily.sunset[index])}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
