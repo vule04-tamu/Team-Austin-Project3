@@ -1,39 +1,62 @@
+/*
+  Accessibility dock + drawer + toolbar for customer kiosk.
+  z-index above magnifier lens (9200) so tab stays visible and clickable.
+*/
+
 :root {
     --kiosk-a11y-tab-width: 56px;
-    --kiosk-a11y-tab-overhang: 12px;
-    --kiosk-a11y-drawer-width: 360px;
-    --kiosk-a11y-radius: 18px;
-    --kiosk-a11y-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
+    --kiosk-a11y-tab-overhang: 14px;
+    --kiosk-a11y-drawer-max: 360px;
+    --kiosk-a11y-radius: 16px;
+    --kiosk-a11y-shadow: -8px 0 32px rgba(0, 0, 0, 0.45);
+    --kiosk-a11y-chrome-z: 10060;
+    --kiosk-a11y-backdrop-z: 10050;
 }
 
 /* backdrop */
 .kiosk-a11y-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.18);
-    z-index: 999;
+    background: rgba(0, 0, 0, 0.42);
+    z-index: var(--kiosk-a11y-backdrop-z);
+    animation: kiosk-a11y-backdrop-in 0.22s ease;
+}
+
+@keyframes kiosk-a11y-backdrop-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 /*
-  Fixed anchor on the right side of the screen.
-  Closed: only tab area exists.
-  Open: shell widens leftward.
+  Shell: hangs slightly past the right edge; width animates so tab + drawer
+  move together like opening a folder.
 */
 .kiosk-a11y-dock-shell {
     position: fixed;
     top: 50%;
     right: calc(-1 * var(--kiosk-a11y-tab-overhang));
     transform: translateY(-50%);
-    width: calc(var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang));
-    z-index: 1000;
+    width: calc(
+        var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang)
+    );
+    max-width: 100vw;
+    z-index: var(--kiosk-a11y-chrome-z);
     overflow: visible;
+    transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .kiosk-a11y-dock-shell.is-open {
-    width: calc(
-        var(--kiosk-a11y-drawer-width) +
-        var(--kiosk-a11y-tab-width) +
-        var(--kiosk-a11y-tab-overhang)
+    width: min(
+        calc(
+            var(--kiosk-a11y-drawer-max) +
+                var(--kiosk-a11y-tab-width) +
+                var(--kiosk-a11y-tab-overhang)
+        ),
+        100vw
     );
 }
 
@@ -44,29 +67,34 @@
 }
 
 /*
-  Drawer sits immediately LEFT of the tab.
-  Hidden state moves it right, offscreen.
+  Drawer: slides left into view; dark theme to match kiosk (not white — was invisible on cream).
 */
 .kiosk-a11y-drawer {
     position: absolute;
     top: 0;
-    /* Flush with tab’s inner (left) edge; tab total width = tab + overhang */
     right: calc(
         var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang) - 1px
     );
-    width: var(--kiosk-a11y-drawer-width);
+    width: min(
+        var(--kiosk-a11y-drawer-max),
+        calc(
+            100vw - var(--kiosk-a11y-tab-width) -
+                var(--kiosk-a11y-tab-overhang) - 16px
+        )
+    );
     max-height: 80vh;
-    background: #fff;
+    background: rgba(14, 6, 28, 0.98);
     border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: var(--kiosk-a11y-shadow);
     overflow: hidden;
 
-    transform: translateX(calc(100% + 18px));
+    transform: translateX(calc(100% + 20px));
     opacity: 0;
     pointer-events: none;
     transition:
-        transform 220ms ease,
-        opacity 220ms ease;
+        transform 0.3s cubic-bezier(0.32, 0.72, 0, 1),
+        opacity 0.25s ease;
 }
 
 .kiosk-a11y-drawer.is-open {
@@ -76,16 +104,17 @@
 }
 
 /*
-  Folder tab: flat seam on the left (meets drawer), rounded on the right
-  so it hangs off the viewport like a physical folder index tab.
+  Folder tab: straight seam on the left; rounded on the right — hangs past the screen edge.
 */
 .kiosk-a11y-edge-tab {
     position: absolute;
-    top: 16px;
+    top: 12px;
     right: 0;
-    width: calc(var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang));
+    width: calc(
+        var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang)
+    );
     min-height: 132px;
-    padding: 14px 10px;
+    padding: 14px 8px;
 
     display: flex;
     flex-direction: column;
@@ -93,51 +122,260 @@
     justify-content: center;
     gap: 8px;
 
-    border: none;
-    /* top-right & bottom-right rounded = outer edge past screen; left edge straight */
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-left: none;
     border-radius: 0 var(--kiosk-a11y-radius) var(--kiosk-a11y-radius) 0;
-    background: #ffffff;
-    box-shadow: var(--kiosk-a11y-shadow);
+    background: linear-gradient(
+        180deg,
+        rgba(36, 18, 66, 0.98) 0%,
+        rgba(26, 10, 46, 0.98) 100%
+    );
+    color: #fff;
+    box-shadow: -6px 0 28px rgba(0, 0, 0, 0.45);
     cursor: pointer;
     z-index: 2;
+    font-family: "Nunito", sans-serif;
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.2s ease;
+}
+
+.kiosk-a11y-edge-tab:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.kiosk-a11y-edge-tab.is-open {
+    border-color: rgba(6, 214, 160, 0.45);
+    box-shadow: -4px 0 24px rgba(6, 214, 160, 0.15);
 }
 
 .kiosk-a11y-edge-tab-icon {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
     line-height: 1;
+    opacity: 0.95;
 }
 
 .kiosk-a11y-edge-tab-label {
     writing-mode: vertical-rl;
     text-orientation: mixed;
-    font-weight: 700;
-    letter-spacing: 0.12em;
+    font-weight: 800;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    font-size: 0.68rem;
+    font-size: 10px;
 }
 
-/* header/body styling */
 .kiosk-a11y-drawer-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 16px 18px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .kiosk-a11y-drawer-title {
-    font-weight: 700;
+    font-family: "Fredoka One", cursive;
+    font-size: 1.15rem;
+    color: #fff;
+    letter-spacing: 0.02em;
 }
 
 .kiosk-a11y-drawer-close {
+    width: 40px;
+    height: 40px;
     border: none;
-    background: transparent;
-    font-size: 1.5rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 1.45rem;
+    line-height: 1;
     cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.kiosk-a11y-drawer-close:hover {
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .kiosk-a11y-drawer-body {
-    padding: 16px 18px;
+    padding: 16px 18px 28px;
     overflow-y: auto;
     max-height: calc(80vh - 64px);
+}
+
+/* ---- Toolbar contents inside drawer ---- */
+
+.kiosk-accessibility-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 20px;
+}
+
+.kiosk-a11y-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.kiosk-a11y-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+h2.kiosk-a11y-section-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+}
+
+.kiosk-text-size-buttons {
+    align-self: flex-start;
+}
+
+.kiosk-size-btn {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+}
+
+.kiosk-size-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.kiosk-size-btn.active {
+    border-color: rgba(255, 107, 157, 0.9) !important;
+    background: rgba(255, 107, 157, 0.22) !important;
+    color: #fff !important;
+}
+
+.kiosk-a11y-language {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.kiosk-a11y-select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.kiosk-a11y-select:focus {
+    outline: 2px solid rgba(6, 214, 160, 0.55);
+    outline-offset: 2px;
+}
+
+.kiosk-a11y-contrast {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.kiosk-a11y-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.kiosk-a11y-range {
+    width: 100%;
+    min-width: 0;
+    flex: 1 1 160px;
+    accent-color: var(--boba-teal, #06d6a0);
+    cursor: pointer;
+}
+
+.kiosk-a11y-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    min-width: 44px;
+}
+
+.kiosk-a11y-mag {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.kiosk-a11y-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 100px;
+    padding: 8px 14px;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kiosk-a11y-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.kiosk-a11y-toggle.on {
+    background: linear-gradient(
+        135deg,
+        rgba(6, 214, 160, 0.35),
+        rgba(76, 201, 240, 0.35)
+    );
+    border-color: rgba(6, 214, 160, 0.6);
+    color: #fff;
+}
+
+.kiosk-a11y-zooms {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.kiosk-a11y-zoom-btn {
+    min-width: 40px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kiosk-a11y-zoom-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.kiosk-a11y-zoom-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.kiosk-a11y-zoom-btn.active {
+    border-color: rgba(255, 107, 157, 0.85);
+    background: rgba(255, 107, 157, 0.25);
+    color: #fff;
 }
