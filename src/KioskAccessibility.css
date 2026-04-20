@@ -3,7 +3,8 @@
 /* ---- Dock: clip shell reveals tab only when closed (no transform bugs with right:0) ---- */
 
 .kiosk-a11y-dock-shell {
-    --kiosk-a11y-tab-w: 48px;
+    /* Closed: show tab + small hang past the clip edge */
+    --kiosk-a11y-tab-w: 52px;
 
     position: fixed;
     top: 0;
@@ -25,39 +26,61 @@
     max-width: min(428px, 100vw);
 }
 
+/* Drawer body first, tab after = row flows left→right [ drawer panel ][ tab handle at screen edge ] */
 .kiosk-a11y-dock {
-    --kiosk-a11y-tab-w: 48px;
+    --kiosk-a11y-tab-w: 46px;
 
     display: flex;
-    flex-direction: row-reverse;
-    align-items: center;
+    flex-direction: row;
+    align-items: stretch;
     flex-wrap: nowrap;
     flex: 0 0 auto;
     width: max-content;
     height: 100%;
 }
 
+/*
+ * Folder-tab handle: attached to the drawer’s right edge, protrudes toward the viewport edge.
+ * Rounded only on the outer (right) side; flat seam on the left where it meets the drawer.
+ */
 .kiosk-a11y-edge-tab {
     flex: 0 0 var(--kiosk-a11y-tab-w);
     width: var(--kiosk-a11y-tab-w);
-    min-height: 118px;
-    padding: 14px 8px;
+    align-self: center;
+    min-height: 108px;
+    max-height: min(420px, 52vh);
+    padding: 12px 7px;
     margin: 0;
+    margin-right: 4px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-left: none;
-    border-radius: 0 14px 14px 0;
-    background: rgba(26, 10, 46, 0.94);
+    border-radius: 0 16px 16px 2px;
+    background: linear-gradient(
+        90deg,
+        rgba(40, 22, 68, 0.98) 0%,
+        rgba(26, 10, 46, 0.96) 28%,
+        rgba(34, 16, 58, 0.98) 100%
+    );
     color: #fff;
     cursor: pointer;
     font-family: "Nunito", sans-serif;
-    box-shadow: -6px 0 28px rgba(0, 0, 0, 0.38);
+    /* Shadow falls left onto the drawer, lip catches light on the right */
+    box-shadow:
+        inset 2px 0 0 rgba(255, 255, 255, 0.06),
+        -4px 0 18px rgba(0, 0, 0, 0.35),
+        3px 0 12px rgba(0, 0, 0, 0.25);
     pointer-events: auto;
-    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.22s ease,
+        margin-right 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.kiosk-a11y-dock-shell.is-open .kiosk-a11y-edge-tab {
+    margin-right: 2px;
 }
 
 .kiosk-a11y-edge-tab:hover {
@@ -65,9 +88,12 @@
     border-color: rgba(255, 255, 255, 0.28);
 }
 
-.kiosk-a11y-dock.is-open .kiosk-a11y-edge-tab {
+.kiosk-a11y-dock-shell.is-open .kiosk-a11y-edge-tab {
     border-color: rgba(6, 214, 160, 0.42);
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.28);
+    box-shadow:
+        inset 2px 0 0 rgba(6, 214, 160, 0.12),
+        -4px 0 20px rgba(0, 0, 0, 0.28),
+        3px 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .kiosk-a11y-edge-tab.is-open {
@@ -75,19 +101,27 @@
     border-color: rgba(6, 214, 160, 0.45);
 }
 
+/* Chevrons toward the drawer = “pull from the right” */
 .kiosk-a11y-edge-tab-icon {
-    font-size: 18px;
+    font-size: 22px;
     line-height: 1;
-    opacity: 0.95;
+    opacity: 0.9;
+    font-weight: 200;
+    transform: scaleY(1.35);
+}
+
+.kiosk-a11y-dock-shell.is-open .kiosk-a11y-edge-tab-icon {
+    transform: scaleY(1.35) rotate(180deg);
 }
 
 .kiosk-a11y-edge-tab-label {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
     font-size: 11px;
     font-weight: 800;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    line-height: 1.15;
 }
 
 .kiosk-a11y-backdrop {
@@ -110,14 +144,15 @@
 
 .kiosk-a11y-drawer {
     flex: 0 1 auto;
-    width: min(380px, calc(100vw - var(--kiosk-a11y-tab-w)));
-    max-width: calc(100vw - var(--kiosk-a11y-tab-w));
+    width: min(380px, calc(100vw - var(--kiosk-a11y-tab-w) - 12px));
+    max-width: calc(100vw - var(--kiosk-a11y-tab-w) - 12px);
     height: 100%;
     display: flex;
     flex-direction: column;
     background: rgba(14, 6, 28, 0.98);
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-right: none;
+    border-radius: 0;
     box-shadow: -16px 0 48px rgba(0, 0, 0, 0.48);
     pointer-events: none;
 }

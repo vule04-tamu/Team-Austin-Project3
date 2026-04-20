@@ -31,20 +31,6 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                 data-html2canvas-ignore
             >
                 <div className="kiosk-a11y-dock">
-                    <button
-                        type="button"
-                        className={`kiosk-a11y-edge-tab ${open ? "is-open" : ""}`}
-                        onClick={() => onOpenChange(!open)}
-                        aria-expanded={open}
-                        aria-controls="kiosk-a11y-drawer"
-                        title="Accessibility options"
-                    >
-                        <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
-                            ◐
-                        </span>
-                        <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
-                    </button>
-
                     <aside
                         id="kiosk-a11y-drawer"
                         className={`kiosk-a11y-drawer ${open ? "is-open" : ""}`}
@@ -65,6 +51,21 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                             <div className="kiosk-a11y-drawer-body">{children}</div>
                         ) : null}
                     </aside>
+
+                    {/* Folder-style tab: rides on the right edge of the drawer, points outward */}
+                    <button
+                        type="button"
+                        className={`kiosk-a11y-edge-tab ${open ? "is-open" : ""}`}
+                        onClick={() => onOpenChange(!open)}
+                        aria-expanded={open}
+                        aria-controls="kiosk-a11y-drawer"
+                        title="Accessibility options"
+                    >
+                        <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
+                            ‹
+                        </span>
+                        <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
+                    </button>
                 </div>
             </div>
         </>
