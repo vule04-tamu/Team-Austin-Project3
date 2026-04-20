@@ -104,7 +104,8 @@
 }
 
 /*
-  Folder tab: straight seam on the left; rounded on the right — hangs past the screen edge.
+  Folder tab: rounded on the LEFT (hinge toward drawer). Outer RIGHT edge straight /
+  flush with screen — reads “extends outward” instead of a bubble pointing back left.
 */
 .kiosk-a11y-edge-tab {
     position: absolute;
@@ -123,12 +124,13 @@
     gap: 8px;
 
     border: 1px solid rgba(255, 255, 255, 0.18);
-    border-left: none;
-    border-radius: 0 var(--kiosk-a11y-radius) var(--kiosk-a11y-radius) 0;
+    border-right: none;
+    border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
     background: linear-gradient(
-        180deg,
-        rgba(36, 18, 66, 0.98) 0%,
-        rgba(26, 10, 46, 0.98) 100%
+        90deg,
+        rgba(44, 24, 78, 0.99) 0%,
+        rgba(26, 10, 46, 0.98) 55%,
+        rgba(20, 8, 38, 1) 100%
     );
     color: #fff;
     box-shadow: -6px 0 28px rgba(0, 0, 0, 0.45);
