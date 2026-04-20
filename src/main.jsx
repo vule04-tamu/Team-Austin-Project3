@@ -3,11 +3,14 @@ import { createRoot } from 'react-dom/client'
 import './main.css'
 import App from './App.jsx'
 import { LanguageProvider } from './LanguageSwitch.jsx'
+import { TextSizeProvider } from './TextSizeControl.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <LanguageProvider>
-      <App />
+      <TextSizeProvider>
+        <App />
+      </TextSizeProvider>
     </LanguageProvider>
   </StrictMode>,
 )

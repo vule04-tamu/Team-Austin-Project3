@@ -140,6 +140,81 @@
     max-width: none;
 }
 
+.kiosk-a11y-drawer .kiosk-a11y-contrast {
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+/* Sections inside drawer (text size, language, contrast, magnifier) */
+
+.kiosk-a11y-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kiosk-a11y-section:last-of-type {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+h2.kiosk-a11y-section-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.72);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+}
+
+.kiosk-text-size-buttons {
+    align-self: flex-start;
+}
+
+.kiosk-size-btn {
+    border-color: rgba(255, 255, 255, 0.22) !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #fff !important;
+}
+
+.kiosk-size-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+.kiosk-size-btn.active {
+    border-color: rgba(255, 107, 157, 0.9) !important;
+    background: rgba(255, 107, 157, 0.22) !important;
+    color: #fff !important;
+}
+
+.kiosk-a11y-language {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.kiosk-a11y-select {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-family: "Nunito", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.kiosk-a11y-select:focus {
+    outline: 2px solid rgba(6, 214, 160, 0.55);
+    outline-offset: 2px;
+}
+
 /* ---- Toolbar row (inside drawer or legacy full-width) ---- */
 
 .kiosk-accessibility-bar {

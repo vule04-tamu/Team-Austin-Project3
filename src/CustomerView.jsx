@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
-import LanguageSwitcher from "./LanguageSwitcher";
 import KioskAccessibilityToolbar, {
     loadMagnifierPrefs,
     persistMagnifierPrefs,
@@ -429,7 +428,6 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <LanguageSwitcher />
                     <div className="kiosk-success">
                         <h2>{t("order_placed")}</h2>
                         <p>{t("thank_you")}</p>
@@ -487,8 +485,6 @@ export default function CustomerView() {
                 className="kiosk-contrast-layer"
                 style={contrastStyle}
             >
-            <LanguageSwitcher />
-
             <div className="kiosk-hero kiosk-hero-compact">
                 <h1>{t('welcome')}</h1>
                 <p>{t('pick_category')}</p>

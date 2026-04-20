@@ -3,7 +3,12 @@ import html2canvas from "html2canvas";
 import "./KioskScreenMagnifier.css";
 
 const LENS_PX = 140;
-const CAPTURE_INTERVAL_MS = 95;
+/** Minimum ms between html2canvas runs (main cost) */
+const MIN_CAPTURE_INTERVAL_MS = 200;
+/** Ignore sub-pixel jitter */
+const MOVE_THRESHOLD_PX = 6;
+/** html2canvas scale: keep at 1 for speed; lens is small */
+const SNAPSHOT_SCALE = 1;
 
 /**
  * Circular lens overlay; captures pixels from `captureRef` (contrast-adjusted layer).
@@ -13,6 +18,9 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
     const lensWrapRef = useRef(null);
     const lastCapRef = useRef(0);
     const busyRef = useRef(false);
+    const lastPointerRef = useRef({ x: -9999, y: -9999 });
+    const pendingRef = useRef(null);
+    const rafRef = useRef(0);
 
     const runCapture = useCallback(
         async (clientX, clientY) => {
@@ -32,6 +40,14 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
                 return;
             }
 
+            const dx = Math.abs(clientX - lastPointerRef.current.x);
+            const dy = Math.abs(clientY - lastPointerRef.current.y);
+            if (dx < MOVE_THRESHOLD_PX && dy < MOVE_THRESHOLD_PX && wrap.style.opacity === "1") {
+                wrap.style.left = `${clientX}px`;
+                wrap.style.top = `${clientY}px`;
+                return;
+            }
+
             const srcW = LENS_PX / zoom;
             const cx = clientX - rect.left + el.scrollLeft;
             const cy = clientY - rect.top + el.scrollTop;
@@ -44,11 +60,18 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
             if (w < 4 || h < 4) return;
 
             const now = performance.now();
-            if (now - lastCapRef.current < CAPTURE_INTERVAL_MS || busyRef.current) {
+            if (
+                now - lastCapRef.current < MIN_CAPTURE_INTERVAL_MS ||
+                busyRef.current
+            ) {
+                wrap.style.left = `${clientX}px`;
+                wrap.style.top = `${clientY}px`;
                 return;
             }
+
             lastCapRef.current = now;
             busyRef.current = true;
+            lastPointerRef.current = { x: clientX, y: clientY };
 
             try {
                 const snap = await html2canvas(el, {
@@ -56,7 +79,7 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
                     y,
                     width: w,
                     height: h,
-                    scale: Math.min(typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1, 2),
+                    scale: SNAPSHOT_SCALE,
                     logging: false,
                     useCORS: true,
                     backgroundColor: null,
@@ -69,8 +92,19 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
                 canvas.style.width = `${LENS_PX}px`;
                 canvas.style.height = `${LENS_PX}px`;
                 ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.imageSmoothingEnabled = true;
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.drawImage(snap, 0, 0, snap.width, snap.height, 0, 0, canvas.width, canvas.height);
+                ctx.drawImage(
+                    snap,
+                    0,
+                    0,
+                    snap.width,
+                    snap.height,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height,
+                );
 
                 wrap.style.left = `${clientX}px`;
                 wrap.style.top = `${clientY}px`;
@@ -84,9 +118,22 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
         [captureRef, zoom],
     );
 
+    const flushPending = useCallback(() => {
+        rafRef.current = 0;
+        const p = pendingRef.current;
+        if (!p) return;
+        runCapture(p.cx, p.cy);
+    }, [runCapture]);
+
     useEffect(() => {
         if (!enabled) {
             if (lensWrapRef.current) lensWrapRef.current.style.opacity = "0";
+            lastPointerRef.current = { x: -9999, y: -9999 };
+            pendingRef.current = null;
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = 0;
+            }
             return;
         }
 
@@ -94,7 +141,10 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
             const cx = e.clientX ?? e.touches?.[0]?.clientX;
             const cy = e.clientY ?? e.touches?.[0]?.clientY;
             if (cx == null || cy == null) return;
-            runCapture(cx, cy);
+            pendingRef.current = { cx, cy };
+            if (!rafRef.current) {
+                rafRef.current = requestAnimationFrame(flushPending);
+            }
         };
 
         window.addEventListener("pointermove", onMove, { passive: true });
@@ -103,8 +153,11 @@ export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
         return () => {
             window.removeEventListener("pointermove", onMove);
             window.removeEventListener("touchmove", onMove);
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+            rafRef.current = 0;
+            pendingRef.current = null;
         };
-    }, [enabled, runCapture]);
+    }, [enabled, flushPending]);
 
     if (!enabled) return null;
 
