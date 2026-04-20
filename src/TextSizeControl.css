@@ -1,0 +1,95 @@
+.text-size-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.text-size-buttons {
+  display: flex;
+  gap: 4px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.size-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  font-family: var(--sans);
+  color: var(--text);
+}
+
+.size-btn:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+}
+
+.size-btn.active {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.size-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.size-indicator.small {
+  font-size: 12px;
+}
+
+.size-indicator.normal {
+  font-size: 14px;
+}
+
+.size-indicator.large {
+  font-size: 16px;
+}
+
+.size-indicator.xlarge {
+  font-size: 18px;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .text-size-buttons {
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .size-btn {
+    width: 28px;
+    height: 28px;
+  }
+
+  .size-indicator.small {
+    font-size: 10px;
+  }
+
+  .size-indicator.normal {
+    font-size: 12px;
+  }
+
+  .size-indicator.large {
+    font-size: 14px;
+  }
+
+  .size-indicator.xlarge {
+    font-size: 16px;
+  }
+}
