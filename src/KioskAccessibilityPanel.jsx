@@ -62,7 +62,7 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                         title="Accessibility options"
                     >
                         <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
-                            ‹
+                            {open ? "‹" : "›"}
                         </span>
                         <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
                     </button>

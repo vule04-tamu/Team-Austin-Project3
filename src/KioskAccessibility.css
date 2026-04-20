@@ -50,7 +50,10 @@
 .kiosk-a11y-drawer {
     position: absolute;
     top: 0;
-    right: calc(var(--kiosk-a11y-tab-width) - 1px);
+    /* Flush with tab’s inner (left) edge; tab total width = tab + overhang */
+    right: calc(
+        var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang) - 1px
+    );
     width: var(--kiosk-a11y-drawer-width);
     max-height: 80vh;
     background: #fff;
@@ -73,7 +76,8 @@
 }
 
 /*
-  Tab is the outermost visible handle on the far right.
+  Folder tab: flat seam on the left (meets drawer), rounded on the right
+  so it hangs off the viewport like a physical folder index tab.
 */
 .kiosk-a11y-edge-tab {
     position: absolute;
@@ -90,7 +94,8 @@
     gap: 8px;
 
     border: none;
-    border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
+    /* top-right & bottom-right rounded = outer edge past screen; left edge straight */
+    border-radius: 0 var(--kiosk-a11y-radius) var(--kiosk-a11y-radius) 0;
     background: #ffffff;
     box-shadow: var(--kiosk-a11y-shadow);
     cursor: pointer;
@@ -104,14 +109,11 @@
 
 .kiosk-a11y-edge-tab-label {
     writing-mode: vertical-rl;
-    transform: rotate(180deg);
+    text-orientation: mixed;
     font-weight: 700;
-    letter-spacing: 0.02em;
-}
-
-/* optional visual link when open so tab feels attached to drawer */
-.kiosk-a11y-edge-tab.is-open {
-    border-top-left-radius: 0;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-size: 0.68rem;
 }
 
 /* header/body styling */
