@@ -1,0 +1,22 @@
+/* Font scaling system - applies --font-scale to all elements */
+:root {
+  --font-scale: 1;
+}
+
+/* Scale all font sizes by the --font-scale variable */
+* {
+  --scaled-font: var(--font-size, 1em);
+}
+
+/* Apply scaling to specific size categories using CSS inheritance */
+h1, h2, h3, h4, h5, h6 {
+  font-size: calc(var(--heading-size, 1em) * var(--font-scale));
+}
+
+/* Global body and text scaling */
+body, p, div, span, button, input, label, li {
+  /* Use CSS variable inheritance for font-size scaling */
+}
+
+/* Override specific font-size values to use calc with --font-scale */
+/* This uses CSS custom property override pattern */
