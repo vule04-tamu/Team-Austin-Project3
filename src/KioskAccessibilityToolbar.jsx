@@ -1,106 +1,74 @@
-import KioskContrastSlider from "./KioskContrastSlider.jsx";
-import LanguageSwitcher from "./LanguageSwitcher.jsx";
-import { TextSizeButtonRow } from "./TextSizeControl.jsx";
+import { useEffect } from "react";
 import "./KioskAccessibility.css";
 
-const LS_MAG = "customerKioskMagnifierEnabled";
-const LS_ZOOM = "customerKioskMagnifierZoom";
-
-export const MAGNIFIER_ZOOM_LEVELS = [0.5, 1, 1.5, 2, 2.5];
-
-export function loadMagnifierPrefs() {
-    const enabled = localStorage.getItem(LS_MAG) === "true";
-    const z = parseFloat(localStorage.getItem(LS_ZOOM) || "1");
-    const zoom = MAGNIFIER_ZOOM_LEVELS.includes(z) ? z : 1;
-    return { enabled, zoom };
-}
-
-export function persistMagnifierPrefs(enabled, zoom) {
-    localStorage.setItem(LS_MAG, String(enabled));
-    localStorage.setItem(LS_ZOOM, String(zoom));
-}
-
 /**
- * Customer kiosk: text size, language, contrast, magnifier (all data-html2canvas-ignore).
+ * Tab stays pinned to the right edge.
+ * Drawer expands left from the tab like a folder tab being pulled out.
  */
-export default function KioskAccessibilityToolbar({
-    contrastPct,
-    onContrastChange,
-    magnifierEnabled,
-    onMagnifierEnabledChange,
-    magnifierZoom,
-    onMagnifierZoomChange,
-}) {
+export default function KioskAccessibilityPanel({ open, onOpenChange, children }) {
+    useEffect(() => {
+        if (!open) return;
+        const onKey = (e) => {
+            if (e.key === "Escape") onOpenChange(false);
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [open, onOpenChange]);
+
     return (
-        <div className="kiosk-accessibility-bar" data-html2canvas-ignore>
-            <section
-                className="kiosk-a11y-section"
-                aria-labelledby="kiosk-a11y-text-heading"
-            >
-                <h2 id="kiosk-a11y-text-heading" className="kiosk-a11y-section-label">
-                    Text size
-                </h2>
-                <TextSizeButtonRow
-                    className="kiosk-text-size-buttons"
-                    buttonClassName="size-btn kiosk-size-btn"
+        <>
+            {open && (
+                <div
+                    className="kiosk-a11y-backdrop"
+                    role="presentation"
+                    aria-hidden
+                    onClick={() => onOpenChange(false)}
+                    data-html2canvas-ignore
                 />
-            </section>
+            )}
 
-            <section
-                className="kiosk-a11y-section"
-                aria-labelledby="kiosk-a11y-lang-heading"
+            <div
+                className={`kiosk-a11y-dock-shell ${open ? "is-open" : ""}`}
+                data-html2canvas-ignore
             >
-                <h2 id="kiosk-a11y-lang-heading" className="kiosk-a11y-section-label">
-                    Language
-                </h2>
-                <LanguageSwitcher layout="embedded" />
-            </section>
+                <div className="kiosk-a11y-dock">
+                    <aside
+                        id="kiosk-a11y-drawer"
+                        className={`kiosk-a11y-drawer ${open ? "is-open" : ""}`}
+                        aria-hidden={!open}
+                    >
+                        <div className="kiosk-a11y-drawer-header">
+                            <span className="kiosk-a11y-drawer-title">Accessibility</span>
+                            <button
+                                type="button"
+                                className="kiosk-a11y-drawer-close"
+                                onClick={() => onOpenChange(false)}
+                                aria-label="Close accessibility panel"
+                            >
+                                ×
+                            </button>
+                        </div>
 
-            <section className="kiosk-a11y-section" aria-label="Contrast">
-                <KioskContrastSlider
-                    value={contrastPct}
-                    onChange={onContrastChange}
-                    id="kiosk-contrast"
-                />
-            </section>
+                        {open ? (
+                            <div className="kiosk-a11y-drawer-body">{children}</div>
+                        ) : null}
+                    </aside>
 
-            <section
-                className="kiosk-a11y-section"
-                aria-labelledby="kiosk-a11y-mag-heading"
-            >
-                <h2 id="kiosk-a11y-mag-heading" className="kiosk-a11y-section-label">
-                    Magnifier
-                </h2>
-                <div className="kiosk-a11y-mag" role="group" aria-label="Screen magnifier">
                     <button
                         type="button"
-                        className={`kiosk-a11y-toggle ${magnifierEnabled ? "on" : ""}`}
-                        onClick={() => onMagnifierEnabledChange(!magnifierEnabled)}
-                        aria-pressed={magnifierEnabled}
-                        title="Toggle screen magnifier"
+                        className={`kiosk-a11y-edge-tab ${open ? "is-open" : ""}`}
+                        onClick={() => onOpenChange(!open)}
+                        aria-expanded={open}
+                        aria-controls="kiosk-a11y-drawer"
+                        title="Accessibility options"
                     >
-                        {magnifierEnabled ? "Magnifier on" : "Magnifier off"}
+                        <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
+                            {open ? "›" : "‹"}
+                        </span>
+                        <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
                     </button>
-                    <div
-                        className="kiosk-a11y-zooms"
-                        role="toolbar"
-                        aria-label="Magnification level"
-                    >
-                        {MAGNIFIER_ZOOM_LEVELS.map((z) => (
-                            <button
-                                key={z}
-                                type="button"
-                                className={`kiosk-a11y-zoom-btn ${magnifierZoom === z ? "active" : ""}`}
-                                onClick={() => onMagnifierZoomChange(z)}
-                                disabled={!magnifierEnabled}
-                                title={`${z}x`}
-                            >
-                                {z}×
-                            </button>
-                        ))}
-                    </div>
                 </div>
-            </section>
-        </div>
+            </div>
+        </>
     );
 }
