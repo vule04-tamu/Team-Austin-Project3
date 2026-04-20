@@ -1,7 +1,14 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
 import LanguageSwitcher from "./LanguageSwitcher";
+import KioskAccessibilityToolbar, {
+    loadMagnifierPrefs,
+    persistMagnifierPrefs,
+} from "./KioskAccessibilityToolbar.jsx";
+import KioskScreenMagnifier from "./KioskScreenMagnifier.jsx";
+import KioskAccessibilityPanel from "./KioskAccessibilityPanel.jsx";
+import "./KioskAccessibility.css";
 import {
     defaultCustomizationSelection,
     ensureIceSugarDefaults,
@@ -12,6 +19,8 @@ import {
 import "./CustomerView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
+
+const CONTRAST_LS_KEY = "customerKioskContrastPct";
 
 const TAX_RATE = 0.0825;
 
@@ -85,6 +94,36 @@ export default function CustomerView() {
     const [pendingCustomIds, setPendingCustomIds] = useState([]);
     const [pendingSize, setPendingSize] = useState("regular");
     const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
+
+    const contrastLayerRef = useRef(null);
+    const [accessibilityOpen, setAccessibilityOpen] = useState(false);
+    const [contrastPct, setContrastPct] = useState(100);
+    const [magnifierEnabled, setMagnifierEnabled] = useState(false);
+    const [magnifierZoom, setMagnifierZoom] = useState(
+        () => loadMagnifierPrefs().zoom,
+    );
+
+    useEffect(() => {
+        const raw = localStorage.getItem(CONTRAST_LS_KEY);
+        if (raw != null) {
+            const v = parseInt(raw, 10);
+            if (!Number.isNaN(v)) {
+                setContrastPct(Math.min(200, Math.max(50, v)));
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem(CONTRAST_LS_KEY, String(contrastPct));
+    }, [contrastPct]);
+
+    useEffect(() => {
+        persistMagnifierPrefs(magnifierEnabled, magnifierZoom);
+    }, [magnifierEnabled, magnifierZoom]);
+
+    useEffect(() => {
+        if (!accessibilityOpen) setMagnifierEnabled(false);
+    }, [accessibilityOpen]);
 
     useEffect(() => {
         (async () => {
@@ -314,38 +353,113 @@ export default function CustomerView() {
 
     const activeSection = grouped.find((s) => s.key === menuTab);
 
-    if (loading) return (
-        <div className="kiosk-root">
-            <div className="kiosk-loading">
-                <div className="kiosk-spinner" />
-                <span>{t('loading_menu')}</span>
-            </div>
-        </div>
+    const contrastStyle = { filter: `contrast(${contrastPct}%)` };
+
+    const a11yToolbar = (
+        <KioskAccessibilityToolbar
+            contrastPct={contrastPct}
+            onContrastChange={setContrastPct}
+            magnifierEnabled={magnifierEnabled}
+            onMagnifierEnabledChange={setMagnifierEnabled}
+            magnifierZoom={magnifierZoom}
+            onMagnifierZoomChange={setMagnifierZoom}
+        />
     );
 
-    if (error) return (
-        <div className="kiosk-root">
-            <div className="kiosk-loading" style={{ color: "#ff6b9d" }}> {error}</div>
-        </div>
+    const a11yChrome = (
+        <KioskAccessibilityPanel
+            open={accessibilityOpen}
+            onOpenChange={setAccessibilityOpen}
+        >
+            {a11yToolbar}
+        </KioskAccessibilityPanel>
     );
 
-    if (orderSuccess) return (
-        <div className="kiosk-root">
-            <LanguageSwitcher />
-            <div className="kiosk-success">
-                <h2>{t('order_placed')}</h2>
-                <p>{t('thank_you')}</p>
-                <div className="kiosk-success-order">{t('order_number')}{orderNumber}</div>
-                <button type="button" className="kiosk-new-order-btn" onClick={() => { setOrderSuccess(false); setOrderNumber(null); }}>
-                    {t('start_new')}
-                </button>
+    if (loading) {
+        return (
+            <div className="kiosk-root">
+                {a11yChrome}
+                <div
+                    ref={contrastLayerRef}
+                    className="kiosk-contrast-layer"
+                    style={contrastStyle}
+                >
+                    <div className="kiosk-loading">
+                        <div className="kiosk-spinner" />
+                        <span>{t("loading_menu")}</span>
+                    </div>
+                </div>
+                <KioskScreenMagnifier
+                    captureRef={contrastLayerRef}
+                    enabled={magnifierEnabled}
+                    zoom={magnifierZoom}
+                />
             </div>
-        </div>
-    );
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="kiosk-root">
+                {a11yChrome}
+                <div
+                    ref={contrastLayerRef}
+                    className="kiosk-contrast-layer"
+                    style={contrastStyle}
+                >
+                    <div className="kiosk-loading" style={{ color: "#ff6b9d" }}>
+                        {error}
+                    </div>
+                </div>
+                <KioskScreenMagnifier
+                    captureRef={contrastLayerRef}
+                    enabled={magnifierEnabled}
+                    zoom={magnifierZoom}
+                />
+            </div>
+        );
+    }
+
+    if (orderSuccess) {
+        return (
+            <div className="kiosk-root">
+                {a11yChrome}
+                <div
+                    ref={contrastLayerRef}
+                    className="kiosk-contrast-layer"
+                    style={contrastStyle}
+                >
+                    <LanguageSwitcher />
+                    <div className="kiosk-success">
+                        <h2>{t("order_placed")}</h2>
+                        <p>{t("thank_you")}</p>
+                        <div className="kiosk-success-order">
+                            {t("order_number")}
+                            {orderNumber}
+                        </div>
+                        <button
+                            type="button"
+                            className="kiosk-new-order-btn"
+                            onClick={() => {
+                                setOrderSuccess(false);
+                                setOrderNumber(null);
+                            }}
+                        >
+                            {t("start_new")}
+                        </button>
+                    </div>
+                </div>
+                <KioskScreenMagnifier
+                    captureRef={contrastLayerRef}
+                    enabled={magnifierEnabled}
+                    zoom={magnifierZoom}
+                />
+            </div>
+        );
+    }
 
     return (
         <div className="kiosk-root">
-            <LanguageSwitcher />
             <header className="kiosk-header">
                 <div className="kiosk-brand">
                     <div>
@@ -365,6 +479,15 @@ export default function CustomerView() {
                     </button>
                 </div>
             </header>
+
+            {a11yChrome}
+
+            <div
+                ref={contrastLayerRef}
+                className="kiosk-contrast-layer"
+                style={contrastStyle}
+            >
+            <LanguageSwitcher />
 
             <div className="kiosk-hero kiosk-hero-compact">
                 <h1>{t('welcome')}</h1>
@@ -677,6 +800,13 @@ export default function CustomerView() {
             )}
 
             {toast && <div className="kiosk-toast">{toast}</div>}
+            </div>
+
+            <KioskScreenMagnifier
+                captureRef={contrastLayerRef}
+                enabled={magnifierEnabled}
+                zoom={magnifierZoom}
+            />
         </div>
     );
 }

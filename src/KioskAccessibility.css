@@ -1,0 +1,260 @@
+/* Customer kiosk: contrast + magnifier (outside contrast filter layer) */
+
+/* ---- Edge tab + slide-out panel (closed by default) ---- */
+
+.kiosk-a11y-edge-tab {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 8900;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 46px;
+    min-height: 112px;
+    padding: 14px 10px;
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-right: none;
+    border-radius: 14px 0 0 14px;
+    background: rgba(26, 10, 46, 0.94);
+    color: #fff;
+    cursor: pointer;
+    font-family: "Nunito", sans-serif;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.4);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kiosk-a11y-edge-tab:hover {
+    background: rgba(40, 18, 72, 0.96);
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+.kiosk-a11y-edge-tab.is-open {
+    background: rgba(45, 16, 87, 0.98);
+    border-color: rgba(6, 214, 160, 0.45);
+}
+
+.kiosk-a11y-edge-tab-icon {
+    font-size: 18px;
+    line-height: 1;
+    opacity: 0.95;
+}
+
+.kiosk-a11y-edge-tab-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.kiosk-a11y-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 8550;
+    background: rgba(0, 0, 0, 0.4);
+    pointer-events: auto;
+}
+
+.kiosk-a11y-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(380px, 100vw);
+    z-index: 8560;
+    display: flex;
+    flex-direction: column;
+    background: rgba(14, 6, 28, 0.98);
+    border-left: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
+    transform: translateX(100%);
+    transition: transform 0.24s ease;
+    pointer-events: none;
+}
+
+.kiosk-a11y-drawer.is-open {
+    transform: translateX(0);
+    pointer-events: auto;
+}
+
+.kiosk-a11y-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    padding: 16px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.kiosk-a11y-drawer-title {
+    font-family: "Fredoka One", cursive;
+    font-size: 20px;
+    color: #fff;
+    letter-spacing: 0.02em;
+}
+
+.kiosk-a11y-drawer-close {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.kiosk-a11y-drawer-close:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.kiosk-a11y-drawer-body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px 18px 28px;
+}
+
+.kiosk-a11y-drawer .kiosk-accessibility-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    border: none;
+    background: transparent;
+    gap: 20px;
+}
+
+.kiosk-a11y-drawer .kiosk-a11y-range {
+    width: 100%;
+    max-width: none;
+}
+
+/* ---- Toolbar row (inside drawer or legacy full-width) ---- */
+
+.kiosk-accessibility-bar {
+    flex-shrink: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 16px 24px;
+    padding: 10px 20px;
+    background: rgba(0, 0, 0, 0.42);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 25;
+}
+
+.kiosk-a11y-contrast {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.kiosk-a11y-label {
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.75);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.kiosk-a11y-range {
+    width: min(160px, 40vw);
+    accent-color: var(--boba-teal, #06d6a0);
+    cursor: pointer;
+}
+
+.kiosk-a11y-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #fff;
+    min-width: 44px;
+}
+
+.kiosk-a11y-mag {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+}
+
+.kiosk-a11y-toggle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 100px;
+    padding: 8px 14px;
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    color: rgba(255, 255, 255, 0.85);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kiosk-a11y-toggle:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.kiosk-a11y-toggle.on {
+    background: linear-gradient(135deg, rgba(6, 214, 160, 0.35), rgba(76, 201, 240, 0.35));
+    border-color: rgba(6, 214, 160, 0.6);
+    color: #fff;
+}
+
+.kiosk-a11y-zooms {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.kiosk-a11y-zoom-btn {
+    min-width: 40px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.9);
+    font-family: "Nunito", sans-serif;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.kiosk-a11y-zoom-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.kiosk-a11y-zoom-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.kiosk-a11y-zoom-btn.active {
+    border-color: rgba(255, 107, 157, 0.85);
+    background: rgba(255, 107, 157, 0.25);
+    color: #fff;
+}
+
+/* Layer that receives filter: contrast(); flex child fills kiosk below toolbar/header */
+
+.kiosk-contrast-layer {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 1;
+}
