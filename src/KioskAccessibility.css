@@ -32,14 +32,15 @@
 }
 
 /*
-  Shell: hangs slightly past the right edge; width animates so tab + drawer
-  move together like opening a folder.
+  Shell: flush to top/bottom of the viewport (no vertical centering — avoids
+  panel sliding “down” or clipping off-screen). Slight overhang past right edge.
 */
 .kiosk-a11y-dock-shell {
     position: fixed;
-    top: 50%;
+    top: 0;
     right: calc(-1 * var(--kiosk-a11y-tab-overhang));
-    transform: translateY(-50%);
+    height: 100dvh;
+    max-height: 100%;
     width: calc(
         var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang)
     );
@@ -63,7 +64,8 @@
 .kiosk-a11y-dock {
     position: relative;
     width: 100%;
-    min-height: 120px;
+    height: 100%;
+    min-height: 0;
 }
 
 /*
@@ -72,6 +74,7 @@
 .kiosk-a11y-drawer {
     position: absolute;
     top: 0;
+    bottom: 0;
     right: calc(
         var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang) - 1px
     );
@@ -82,12 +85,14 @@
                 var(--kiosk-a11y-tab-overhang) - 16px
         )
     );
-    max-height: 80vh;
+    max-height: none;
     background: rgba(14, 6, 28, 0.98);
     border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: var(--kiosk-a11y-shadow);
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
     transform: translateX(calc(100% + 20px));
     opacity: 0;
@@ -104,18 +109,20 @@
 }
 
 /*
-  Folder tab: rounded on the LEFT (hinge toward drawer). Outer RIGHT edge straight /
-  flush with screen — reads “extends outward” instead of a bubble pointing back left.
+  Tab: full viewport height on the strip; rounded on the OUTER (right) edge only —
+  that is the side that hooks past the screen / “index tab” end. Left edge straight
+  against the drawer (hinge).
 */
 .kiosk-a11y-edge-tab {
     position: absolute;
-    top: 12px;
+    top: 0;
+    bottom: 0;
     right: 0;
+    height: auto;
     width: calc(
         var(--kiosk-a11y-tab-width) + var(--kiosk-a11y-tab-overhang)
     );
-    min-height: 132px;
-    padding: 14px 8px;
+    padding: 16px 8px;
 
     display: flex;
     flex-direction: column;
@@ -125,12 +132,12 @@
 
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-right: none;
-    border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
+    border-radius: 0 var(--kiosk-a11y-radius) var(--kiosk-a11y-radius) 0;
     background: linear-gradient(
-        90deg,
-        rgba(44, 24, 78, 0.99) 0%,
-        rgba(26, 10, 46, 0.98) 55%,
-        rgba(20, 8, 38, 1) 100%
+        180deg,
+        rgba(36, 18, 66, 0.98) 0%,
+        rgba(26, 10, 46, 0.98) 50%,
+        rgba(20, 8, 38, 0.99) 100%
     );
     color: #fff;
     box-shadow: -6px 0 28px rgba(0, 0, 0, 0.45);
@@ -159,8 +166,10 @@
 }
 
 .kiosk-a11y-edge-tab-label {
-    writing-mode: vertical-rl;
+    /* Left-to-right down the strip (reads naturally on a right-edge control) */
+    writing-mode: vertical-lr;
     text-orientation: mixed;
+    direction: ltr;
     font-weight: 800;
     letter-spacing: 0.14em;
     text-transform: uppercase;
@@ -171,6 +180,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-shrink: 0;
     padding: 16px 18px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -200,9 +210,10 @@
 }
 
 .kiosk-a11y-drawer-body {
+    flex: 1;
+    min-height: 0;
     padding: 16px 18px 28px;
     overflow-y: auto;
-    max-height: calc(80vh - 64px);
 }
 
 /* ---- Toolbar contents inside drawer ---- */
