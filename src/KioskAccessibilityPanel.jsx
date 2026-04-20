@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import "./KioskAccessibility.css";
 
 /**
- * Edge control for customer kiosk: tab + drawer slide together as one rail
- * (translateX(calc(100% - tabWidth)) when closed).
+ * Edge control for customer kiosk: tab + drawer move together as one docked panel.
  */
 export default function KioskAccessibilityPanel({ open, onOpenChange, children }) {
     useEffect(() => {
@@ -28,14 +27,27 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
             )}
 
             <div
-                className={`kiosk-a11y-rail ${open ? "is-open" : ""}`}
+                className={`kiosk-a11y-dock ${open ? "is-open" : ""}`}
                 data-html2canvas-ignore
             >
+                <button
+                    type="button"
+                    className={`kiosk-a11y-edge-tab ${open ? "is-open" : ""}`}
+                    onClick={() => onOpenChange(!open)}
+                    aria-expanded={open}
+                    aria-controls="kiosk-a11y-drawer"
+                    title="Accessibility options"
+                >
+                    <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
+                        ◐
+                    </span>
+                    <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
+                </button>
+
                 <aside
                     id="kiosk-a11y-drawer"
-                    className="kiosk-a11y-drawer"
+                    className={`kiosk-a11y-drawer ${open ? "is-open" : ""}`}
                     aria-hidden={!open}
-                    inert={!open}
                 >
                     <div className="kiosk-a11y-drawer-header">
                         <span className="kiosk-a11y-drawer-title">Accessibility</span>
@@ -52,20 +64,6 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                         <div className="kiosk-a11y-drawer-body">{children}</div>
                     ) : null}
                 </aside>
-
-                <button
-                    type="button"
-                    className={`kiosk-a11y-edge-tab ${open ? "is-open" : ""}`}
-                    onClick={() => onOpenChange(!open)}
-                    aria-expanded={open}
-                    aria-controls="kiosk-a11y-drawer"
-                    title="Accessibility options"
-                >
-                    <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
-                        ◐
-                    </span>
-                    <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
-                </button>
             </div>
         </>
     );
