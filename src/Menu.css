@@ -1,5 +1,29 @@
 /* Landscape menu board — single viewport, no page scroll */
+.menu-board-back {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.55rem;
+    z-index: 2;
+    padding: 0.35rem 0.65rem;
+    border: 0.5px solid #c9a87c;
+    border-radius: 6px;
+    background: #fffaf5;
+    color: #5c3d2e;
+    font-family: system-ui, sans-serif;
+    font-size: clamp(0.55rem, 1.2vmin, 0.75rem);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.menu-board-back:hover {
+    background: #fff2e6;
+    border-color: #a07850;
+}
+
 .menu-wrap.menu-board {
+    position: relative;
     height: 100dvh;
     max-height: 100dvh;
     width: 100vw;
