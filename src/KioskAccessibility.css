@@ -1,27 +1,40 @@
 /* Customer kiosk: contrast + magnifier (outside contrast filter layer) */
 
-/* ---- Dock: tab + drawer slide together (closed = tab peek only) ---- */
+/* ---- Dock: clip shell reveals tab only when closed (no transform bugs with right:0) ---- */
 
-.kiosk-a11y-dock {
+.kiosk-a11y-dock-shell {
     --kiosk-a11y-tab-w: 48px;
 
     position: fixed;
     top: 0;
     right: 0;
     height: 100%;
+    z-index: 8900;
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    overflow: hidden;
+    width: var(--kiosk-a11y-tab-w);
+    max-width: 100vw;
+    pointer-events: none;
+    transition: width 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.kiosk-a11y-dock-shell.is-open {
+    width: max-content;
+    max-width: min(428px, 100vw);
+}
+
+.kiosk-a11y-dock {
+    --kiosk-a11y-tab-w: 48px;
+
     display: flex;
     flex-direction: row-reverse;
     align-items: center;
     flex-wrap: nowrap;
-    z-index: 8900;
-    pointer-events: none;
-    transform: translateX(calc(100% - var(--kiosk-a11y-tab-w)));
-    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    will-change: transform;
-}
-
-.kiosk-a11y-dock.is-open {
-    transform: translateX(0);
+    flex: 0 0 auto;
+    width: max-content;
+    height: 100%;
 }
 
 .kiosk-a11y-edge-tab {
