@@ -1,11 +1,8 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
-import KioskAccessibilityToolbar from "./KioskAccessibilityToolbar.jsx";
-import KioskAccessibilityPanel from "./KioskAccessibilityPanel.jsx";
+import AccessibilityDrawer from "./AccessibilityDrawer.jsx";
 import "./KioskAccessibility.css";
-import LanguageSwitcher from "./LanguageSwitcher.jsx";
-import { TextSizeButtonRow } from "./TextSizeControl.jsx";
 import {
     defaultCustomizationSelection,
     ensureIceSugarDefaults,
@@ -17,7 +14,7 @@ import "./CustomerView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
-const CONTRAST_LS_KEY = "customerKioskContrastPct";
+const CONTRAST_LS_KEY = "kioskAccessibilityContrastPct";
 
 const TAX_RATE = 0.0825;
 
@@ -93,7 +90,6 @@ export default function CustomerView() {
     const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
 
     const contrastLayerRef = useRef(null);
-    const [accessibilityOpen, setAccessibilityOpen] = useState(false);
     const [contrastPct, setContrastPct] = useState(100);
 
     useEffect(() => {
@@ -340,30 +336,11 @@ export default function CustomerView() {
 
     const contrastStyle = { filter: `contrast(${contrastPct}%)` };
 
-    const a11yToolbar = (
-        <>
-            <KioskAccessibilityToolbar
-                contrastPct={contrastPct}
-                onContrastChange={setContrastPct}
-            />
-            <LanguageSwitcher layout="embedded" />
-            <div className="kiosk-a11y-text-size">
-                <span className="kiosk-a11y-section-label">Text Size</span>
-                <TextSizeButtonRow
-                    className="kiosk-a11y-text-size-row"
-                    buttonClassName="kiosk-a11y-size-btn"
-                />
-            </div>
-        </>
-    );
-
     const a11yChrome = (
-        <KioskAccessibilityPanel
-            open={accessibilityOpen}
-            onOpenChange={setAccessibilityOpen}
-        >
-            {a11yToolbar}
-        </KioskAccessibilityPanel>
+        <AccessibilityDrawer
+            contrastPct={contrastPct}
+            onContrastChange={setContrastPct}
+        />
     );
 
     if (loading) {

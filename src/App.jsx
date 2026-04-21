@@ -1,64 +1,53 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import Login from './Login'
 import Menu from './Menu'
-import TextSizeControl from './TextSizeControl'
 import './App.css'
 import CashierView from './CashierView'
 import ManagerView from './ManagerView'
 import CustomerView from './CustomerView'
 import KioskScreenMagnifier from './KioskScreenMagnifier'
 import { useScreenMagnifier } from './ScreenMagnifierContext'
-
-function GlobalMagnifierControl() {
-  const {
-    magnifierEnabled,
-    setMagnifierEnabled,
-    magnifierZoom,
-    setMagnifierZoom,
-    magnifierZoomLevels,
-  } = useScreenMagnifier()
-
-  return (
-    <div className="global-mag-control">
-      <button
-        type="button"
-        className={`global-mag-toggle ${magnifierEnabled ? 'on' : ''}`}
-        onClick={() => setMagnifierEnabled(!magnifierEnabled)}
-      >
-        Magnifier {magnifierEnabled ? 'On' : 'Off'}
-      </button>
-      <div className="global-mag-zooms">
-        {magnifierZoomLevels.map((z) => (
-          <button
-            key={z}
-            type="button"
-            className={`global-mag-zoom-btn ${magnifierZoom === z ? 'active' : ''}`}
-            onClick={() => setMagnifierZoom(z)}
-            disabled={!magnifierEnabled}
-          >
-            {z}x
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
+import { useTextSize } from './TextSizeControl'
+import { useLanguage } from './LanguageSwitch'
 
 function AppRoutes() {
   const location = useLocation()
-  const hideGlobalTextControls = location.pathname === '/customer'
+  const isAccessibilityRoute =
+    location.pathname === '/' || location.pathname === '/customer'
   const captureRef = useRef(null)
-  const { magnifierEnabled, magnifierZoom } = useScreenMagnifier()
+  const {
+    magnifierEnabled,
+    magnifierZoom,
+    setMagnifierEnabled,
+  } = useScreenMagnifier()
+  const { scale, setScale } = useTextSize()
+  const { language, setLanguage } = useLanguage()
+
+  useEffect(() => {
+    if (isAccessibilityRoute) return
+
+    if (magnifierEnabled) {
+      setMagnifierEnabled(false)
+    }
+    if (scale !== 'normal') {
+      setScale('normal')
+    }
+    if (language !== 'english') {
+      setLanguage('english')
+    }
+  }, [
+    isAccessibilityRoute,
+    language,
+    magnifierEnabled,
+    scale,
+    setLanguage,
+    setMagnifierEnabled,
+    setScale,
+  ])
 
   return (
     <div className="app-container">
-      {!hideGlobalTextControls && (
-        <div className="app-header">
-          <GlobalMagnifierControl />
-          <TextSizeControl />
-        </div>
-      )}
       <div ref={captureRef} className="app-routes-shell">
         <Routes>
           <Route path="/" element={<Login />} />
@@ -68,11 +57,13 @@ function AppRoutes() {
           <Route path="/customer" element={<CustomerView />}/>
         </Routes>
       </div>
-      <KioskScreenMagnifier
-        captureRef={captureRef}
-        enabled={magnifierEnabled}
-        zoom={magnifierZoom}
-      />
+      {isAccessibilityRoute && (
+        <KioskScreenMagnifier
+          captureRef={captureRef}
+          enabled={magnifierEnabled}
+          zoom={magnifierZoom}
+        />
+      )}
     </div>
   )
 }

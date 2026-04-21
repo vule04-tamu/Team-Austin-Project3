@@ -29,7 +29,10 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                 />
             )}
 
-            <div className={`kiosk-a11y-dock-shell ${open ? "is-open" : ""}`}>
+            <div
+                className={`kiosk-a11y-dock-shell ${open ? "is-open" : ""}`}
+                data-screen-magnifier-ignore="true"
+            >
                 <div className="kiosk-a11y-dock">
                     <aside
                         id="kiosk-a11y-drawer"
