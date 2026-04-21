@@ -69,7 +69,12 @@ function newLineId() {
 
 export default function CustomerView() {
     const navigate = useNavigate();
-    const { t } = useLanguage();
+    const {
+        t,
+        translateCustomizationCategory,
+        translateCustomizationOption,
+        translateMenuItemName,
+    } = useLanguage();
 
     const [menuItems, setMenuItems] = useState([]);
     const [customizationOptions, setCustomizationOptions] = useState([]);
@@ -200,8 +205,8 @@ export default function CustomerView() {
                 },
             ];
         });
-        showToast(`Added ${item.name}!`);
-    }, [showToast]);
+        showToast(t("added_item", { item: translateMenuItemName(item.name) }));
+    }, [showToast, t, translateMenuItemName]);
 
     const onDrinkClick = (item) => {
         const variants = sizeMap.get(item.name);
@@ -276,7 +281,11 @@ export default function CustomerView() {
         const ids = line.customizationIds || [];
         if (!ids.length) return null;
         return ids
-            .map((id) => customizationOptions.find((o) => o.id === id)?.name)
+            .map((id) =>
+                translateCustomizationOption(
+                    customizationOptions.find((o) => o.id === id)?.name,
+                ),
+            )
             .filter(Boolean)
             .join(", ");
     };
@@ -453,7 +462,7 @@ export default function CustomerView() {
 
             <div className="kiosk-body">
                 <div className="kiosk-menu-column">
-                    <div className="kiosk-menu-tabs" role="tablist" aria-label="Menu categories">
+                    <div className="kiosk-menu-tabs" role="tablist" aria-label={t("menu_categories")}>
                         {grouped.map((section) => {
                             if (section.items.length === 0) return null;
                             const selected = menuTab === section.key;
@@ -481,7 +490,7 @@ export default function CustomerView() {
                     <div
                         className="kiosk-menu-tab-panel"
                         role="tabpanel"
-                        aria-label={activeSection ? t(activeSection.labelKey) : "Menu"}
+                        aria-label={activeSection ? t(activeSection.labelKey) : t("menu")}
                     >
                         {activeSection && activeSection.items.length > 0 ? (
                             <div className="kiosk-grid">
@@ -504,7 +513,7 @@ export default function CustomerView() {
                                             />
                                             <div className="kiosk-card-body">
                                                 <div className="kiosk-card-name">
-                                                    {item.name}
+                                                    {translateMenuItemName(item.name)}
                                                 </div>
                                                 <div className="kiosk-card-footer">
                                                     <span className="kiosk-card-price">
@@ -564,7 +573,7 @@ export default function CustomerView() {
                                 <div key={item.lineId} className="kiosk-cart-item">
                                     <div className="kiosk-cart-item-dot" style={{ background: cardColor(item.id) }} />
                                     <div className="kiosk-cart-item-info">
-                                        <div className="kiosk-cart-item-name">{item.name}</div>
+                                        <div className="kiosk-cart-item-name">{translateMenuItemName(item.name)}</div>
                                         {csum && (
                                             <div className="kiosk-cart-item-custom">{csum}</div>
                                         )}
@@ -621,7 +630,7 @@ export default function CustomerView() {
                 >
                     <div className="kiosk-modal kiosk-customize-modal">
                         <p className="kiosk-modal-title">
-                            {t('customize')} {customizeModal.item.name}
+                            {t('customize')} {translateMenuItemName(customizeModal.item.name)}
                         </p>
                         <p className="kiosk-modal-label">
                             {customizeModal.variants
@@ -644,7 +653,7 @@ export default function CustomerView() {
                                     <div
                                         className="kiosk-customize-chips kiosk-customize-chips-exclusive"
                                         role="radiogroup"
-                                        aria-label="Size"
+                                        aria-label={t("size_option_group")}
                                     >
                                         <button
                                             type="button"
@@ -670,7 +679,7 @@ export default function CustomerView() {
                             {customizeModal.item.customizable && [...optionsByCategory.entries()].map(([cat, opts]) => (
                                 <div key={cat} className="kiosk-customize-block">
                                     <div className="kiosk-customize-cat">
-                                        {cat}
+                                        {translateCustomizationCategory(cat)}
                                         {isExclusiveCategory(cat) && (
                                             <span className="kiosk-customize-cat-hint">
                                                 {t('one_only')}
@@ -688,7 +697,7 @@ export default function CustomerView() {
                                                 ? "radiogroup"
                                                 : undefined
                                         }
-                                        aria-label={cat}
+                                        aria-label={translateCustomizationCategory(cat)}
                                     >
                                         {sortOptionsForDisplay(cat, opts).map((o) => (
                                             <button
@@ -709,7 +718,7 @@ export default function CustomerView() {
                                                     handleCustomizationClick(cat, o.id)
                                                 }
                                             >
-                                                {o.name}
+                                                {translateCustomizationOption(o.name)}
                                                 {Number(o.priceModifier) > 0 && (
                                                     <span> +{fmt(o.priceModifier)}</span>
                                                 )}

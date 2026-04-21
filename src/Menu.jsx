@@ -34,7 +34,7 @@ const SECTIONS = [
 
 export default function Menu() {
   const navigate = useNavigate();
-  const { t } = useLanguage();
+  const { t, translateMenuItemName } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -144,7 +144,7 @@ export default function Menu() {
                   return (
                     <div key={item.id} className="menu-board-item">
                       <div className="item-main">
-                        <p className="item-name">{item.name}</p>
+                        <p className="item-name">{translateMenuItemName(item.name)}</p>
                         {item.customizable && (
                           <span className="item-badge">{t('custom_badge')}</span>
                         )}

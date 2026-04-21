@@ -1,11 +1,13 @@
 import KioskContrastSlider from "./KioskContrastSlider.jsx";
 import "./KioskAccessibility.css";
+import { useLanguage } from "./LanguageSwitch.jsx";
 import { useScreenMagnifier } from "./ScreenMagnifierContext.jsx";
 
 export default function KioskAccessibilityToolbar({
     contrastPct,
     onContrastChange,
 }) {
+    const { t } = useLanguage();
     const {
         magnifierEnabled,
         setMagnifierEnabled,
@@ -20,7 +22,7 @@ export default function KioskAccessibilityToolbar({
 
             <div className="kiosk-a11y-mag">
                 <span className="kiosk-a11y-label" id="kiosk-a11y-mag-label">
-                    Magnifier
+                    {t("magnifier")}
                 </span>
                 <button
                     type="button"
@@ -29,9 +31,9 @@ export default function KioskAccessibilityToolbar({
                     aria-pressed={magnifierEnabled}
                     aria-describedby="kiosk-a11y-mag-label"
                 >
-                    {magnifierEnabled ? "On" : "Off"}
+                    {magnifierEnabled ? t("on") : t("off")}
                 </button>
-                <div className="kiosk-a11y-zooms" role="group" aria-label="Magnifier zoom">
+                <div className="kiosk-a11y-zooms" role="group" aria-label={t("magnifier_zoom")}>
                     {magnifierZoomLevels.map((z) => (
                         <button
                             key={z}

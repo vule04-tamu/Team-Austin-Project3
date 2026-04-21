@@ -6,6 +6,7 @@ import {
     useCallback,
     useMemo,
 } from "react";
+import { useLanguage } from "./LanguageSwitch";
 import "./TextSizeControl.css";
 
 const TEXT_SIZE_SCALES = {
@@ -113,6 +114,7 @@ export function useTextSize() {
 /** Reusable button row; used in global header and kiosk accessibility drawer */
 export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn" }) {
     const { scale, setScale } = useTextSize();
+    const { t } = useLanguage();
 
     return (
         <div className={`text-size-buttons ${className}`.trim()}>
@@ -120,7 +122,8 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "small" ? "active" : ""}`}
                 onClick={() => setScale("small")}
-                title="Smaller text"
+                title={t("smaller_text")}
+                aria-label={t("smaller_text")}
             >
                 <span className="size-indicator small">A</span>
             </button>
@@ -128,7 +131,8 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "normal" ? "active" : ""}`}
                 onClick={() => setScale("normal")}
-                title="Normal text"
+                title={t("normal_text")}
+                aria-label={t("normal_text")}
             >
                 <span className="size-indicator normal">A</span>
             </button>
@@ -136,7 +140,8 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "large" ? "active" : ""}`}
                 onClick={() => setScale("large")}
-                title="Larger text"
+                title={t("larger_text")}
+                aria-label={t("larger_text")}
             >
                 <span className="size-indicator large">A</span>
             </button>
@@ -144,7 +149,8 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "xlarge" ? "active" : ""}`}
                 onClick={() => setScale("xlarge")}
-                title="Extra large text"
+                title={t("extra_large_text")}
+                aria-label={t("extra_large_text")}
             >
                 <span className="size-indicator xlarge">A</span>
             </button>

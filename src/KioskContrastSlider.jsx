@@ -1,12 +1,16 @@
+import { useLanguage } from "./LanguageSwitch";
+
 /**
  * Customer kiosk only: adjusts CSS contrast() for low-vision users.
  * Used together with the screen magnifier; toolbar sits outside the filtered layer.
  */
 export default function KioskContrastSlider({ value, onChange, id = "kiosk-contrast-range" }) {
+    const { t } = useLanguage();
+
     return (
         <div className="kiosk-a11y-contrast">
             <label className="kiosk-a11y-label" htmlFor={id}>
-                Contrast
+                {t("contrast")}
             </label>
             <input
                 id={id}

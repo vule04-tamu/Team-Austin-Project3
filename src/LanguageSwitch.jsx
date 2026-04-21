@@ -1,4 +1,10 @@
-import { createContext, useState, useContext } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
 
 const translations = {
   english: {
@@ -85,6 +91,29 @@ const translations = {
     sec_specialties_tab: "Specialties",
     sec_toppings: "Toppings / Add-ons",
     sec_toppings_tab: "Toppings",
+    
+    // Accessibility
+    accessibility: "Accessibility",
+    open_accessibility_options: "Open accessibility options",
+    close_accessibility_options: "Close accessibility options",
+    translate_label: "Translate",
+    language_english: "English",
+    language_spanish: "Español",
+    language_chinese: "中文",
+    text_size: "Text Size",
+    contrast: "Contrast",
+    magnifier: "Magnifier",
+    magnifier_zoom: "Magnifier zoom",
+    on: "On",
+    off: "Off",
+    smaller_text: "Smaller text",
+    normal_text: "Normal text",
+    larger_text: "Larger text",
+    extra_large_text: "Extra large text",
+    menu_categories: "Menu categories",
+    menu: "Menu",
+    size_option_group: "Size",
+    added_item: "Added {item}!",
   },
   spanish: {
     shop_name: "Tienda de Boba de Austin",
@@ -164,6 +193,28 @@ const translations = {
     sec_specialties_tab: "Especialidades",
     sec_toppings: "Toppings / Adiciones",
     sec_toppings_tab: "Toppings",
+    
+    accessibility: "Accesibilidad",
+    open_accessibility_options: "Abrir opciones de accesibilidad",
+    close_accessibility_options: "Cerrar opciones de accesibilidad",
+    translate_label: "Traducir",
+    language_english: "English",
+    language_spanish: "Español",
+    language_chinese: "中文",
+    text_size: "Tamaño del texto",
+    contrast: "Contraste",
+    magnifier: "Lupa",
+    magnifier_zoom: "Zoom de la lupa",
+    on: "Activado",
+    off: "Desactivado",
+    smaller_text: "Texto más pequeño",
+    normal_text: "Texto normal",
+    larger_text: "Texto más grande",
+    extra_large_text: "Texto extragrande",
+    menu_categories: "Categorías del menú",
+    menu: "Menu",
+    size_option_group: "Tamaño",
+    added_item: "Añadiste {item}!",
   },
   chinese: {
     shop_name: "Austin的波霸奶茶店",
@@ -194,7 +245,7 @@ const translations = {
     welcome: "欢迎！",
     pick_category: "选择分类，然后点击饮品",
     tap_to_customize: "点击以自定义",
-    in_cart: "在购物车:",
+    in_cart: "在购物车",
     no_drinks_cat: "该分类下没有饮品。",
     your_order: "您的订单",
     item: "件商品",
@@ -243,20 +294,191 @@ const translations = {
     sec_specialties_tab: "特色饮品",
     sec_toppings: "加料",
     sec_toppings_tab: "加料",
+    
+    accessibility: "无障碍",
+    open_accessibility_options: "打开无障碍选项",
+    close_accessibility_options: "关闭无障碍选项",
+    translate_label: "语言",
+    language_english: "English",
+    language_spanish: "Español",
+    language_chinese: "中文",
+    text_size: "文字大小",
+    contrast: "对比度",
+    magnifier: "放大镜",
+    magnifier_zoom: "放大倍数",
+    on: "开启",
+    off: "关闭",
+    smaller_text: "更小文字",
+    normal_text: "正常文字",
+    larger_text: "更大文字",
+    extra_large_text: "超大文字",
+    menu_categories: "菜单分类",
+    menu: "菜单",
+    size_option_group: "杯型",
+    added_item: "已添加{item}！",
   }
 };
+
+const catalogTranslations = {
+  spanish: {
+    menuItems: {
+      "Classic Milk Tea": "Té clásico con leche",
+      "Jasmine Green Milk Tea": "Té verde jazmín con leche",
+      "Taro Milk Tea": "Té de taro con leche",
+      "Thai Milk Tea": "Té tailandés con leche",
+      "Honey Milk Tea": "Té con miel y leche",
+      "Brown Sugar Milk Tea": "Té con leche y azúcar morena",
+      "Strawberry Milk Tea": "Té de fresa con leche",
+      "Wintermelon Milk Tea": "Té de melón de invierno con leche",
+      "Coffee Milk Tea": "Té de café con leche",
+      "Coconut Milk Tea": "Té de coco con leche",
+      "Chocolate Milk Tea": "Té de chocolate con leche",
+      "Oreo Milk Tea": "Té Oreo con leche",
+      "March Milk Tea": "Té March con leche",
+      "Mango Green Tea": "Té verde de mango",
+      "Passion Fruit Tea": "Té de maracuyá",
+      "Lychee Green Tea": "Té verde de lichi",
+      "Peach Oolong Tea": "Té oolong de durazno",
+      "Wintermelon Tea": "Té de melón de invierno",
+      "Honey Lemon Tea": "Té de miel con limón",
+      "Mint Tea": "Té de menta",
+      "Matcha Latte": "Latte de matcha",
+      "jayden special": "Especial Jayden",
+      "Fresh Milk": "Leche fresca",
+      "Boba Pearls": "Perlas de boba",
+      "Lychee Jelly": "Gelatina de lichi",
+    },
+    customizationCategories: {
+      "Ice Level": "Nivel de hielo",
+      "Sugar Level": "Nivel de azúcar",
+      "Toppings": "Toppings",
+      "Other": "Otro",
+    },
+    customizationOptions: {
+      "No Ice": "Sin hielo",
+      "Light Ice": "Poco hielo",
+      "Regular Ice": "Hielo regular",
+      "Extra Ice": "Extra hielo",
+      "Boba Pearls": "Perlas de boba",
+      "Lychee Jelly": "Gelatina de lichi",
+    },
+  },
+  chinese: {
+    menuItems: {
+      "Classic Milk Tea": "经典奶茶",
+      "Jasmine Green Milk Tea": "茉莉绿奶茶",
+      "Taro Milk Tea": "芋头奶茶",
+      "Thai Milk Tea": "泰式奶茶",
+      "Honey Milk Tea": "蜂蜜奶茶",
+      "Brown Sugar Milk Tea": "黑糖奶茶",
+      "Strawberry Milk Tea": "草莓奶茶",
+      "Wintermelon Milk Tea": "冬瓜奶茶",
+      "Coffee Milk Tea": "咖啡奶茶",
+      "Coconut Milk Tea": "椰香奶茶",
+      "Chocolate Milk Tea": "巧克力奶茶",
+      "Oreo Milk Tea": "奥利奥奶茶",
+      "March Milk Tea": "March奶茶",
+      "Mango Green Tea": "芒果绿茶",
+      "Passion Fruit Tea": "百香果茶",
+      "Lychee Green Tea": "荔枝绿茶",
+      "Peach Oolong Tea": "蜜桃乌龙茶",
+      "Wintermelon Tea": "冬瓜茶",
+      "Honey Lemon Tea": "蜂蜜柠檬茶",
+      "Mint Tea": "薄荷茶",
+      "Matcha Latte": "抹茶拿铁",
+      "jayden special": "Jayden特调",
+      "Fresh Milk": "鲜奶",
+      "Boba Pearls": "波霸珍珠",
+      "Lychee Jelly": "荔枝椰果",
+    },
+    customizationCategories: {
+      "Ice Level": "冰块",
+      "Sugar Level": "糖度",
+      "Toppings": "加料",
+      "Other": "其他",
+    },
+    customizationOptions: {
+      "No Ice": "去冰",
+      "Light Ice": "少冰",
+      "Regular Ice": "正常冰",
+      "Extra Ice": "多冰",
+      "Boba Pearls": "波霸珍珠",
+      "Lychee Jelly": "荔枝椰果",
+    },
+  },
+};
+
+const LARGE_SUFFIX = " (Large)";
+
+function translateCatalogValue(language, bucket, value) {
+  return catalogTranslations[language]?.[bucket]?.[value] || value;
+}
+
+function translateMenuItemNameForLanguage(language, t, name) {
+  if (!name) return name;
+
+  if (name.endsWith(LARGE_SUFFIX)) {
+    const baseName = name.slice(0, -LARGE_SUFFIX.length);
+    const translatedBase = translateCatalogValue(language, "menuItems", baseName);
+    if (language === "english" && translatedBase === baseName) {
+      return name;
+    }
+    return `${translatedBase} (${t("large")})`;
+  }
+
+  return translateCatalogValue(language, "menuItems", name);
+}
 
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
   const [language, setLanguage] = useState('english');
 
-  const t = (key) => {
-    return translations[language]?.[key] || key;
-  };
+  const t = useCallback((key, vars = {}) => {
+    const template =
+      translations[language]?.[key] ??
+      translations.english[key] ??
+      key;
+
+    return Object.entries(vars).reduce(
+      (result, [varName, value]) =>
+        result.replaceAll(`{${varName}}`, String(value)),
+      template,
+    );
+  }, [language]);
+
+  const translateMenuItemName = useCallback(
+    (name) => translateMenuItemNameForLanguage(language, t, name),
+    [language, t],
+  );
+
+  const translateCustomizationCategory = useCallback(
+    (category) => translateCatalogValue(language, "customizationCategories", category),
+    [language],
+  );
+
+  const translateCustomizationOption = useCallback(
+    (name) => translateCatalogValue(language, "customizationOptions", name),
+    [language],
+  );
+
+  const value = useMemo(() => ({
+    language,
+    setLanguage,
+    t,
+    translateMenuItemName,
+    translateCustomizationCategory,
+    translateCustomizationOption,
+  }), [
+    language,
+    t,
+    translateCustomizationCategory,
+    translateCustomizationOption,
+    translateMenuItemName,
+  ]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useLanguage } from "./LanguageSwitch";
 import "./KioskAccessibility.css";
 
 /**
@@ -7,6 +8,8 @@ import "./KioskAccessibility.css";
  * The drawer opens to the left from that tab.
  */
 export default function KioskAccessibilityPanel({ open, onOpenChange, children }) {
+    const { t } = useLanguage();
+
     useEffect(() => {
         if (!open) return;
 
@@ -40,7 +43,7 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                         aria-hidden={!open}
                     >
                         <div className="kiosk-a11y-drawer-header">
-                            <span className="kiosk-a11y-drawer-title">Accessibility</span>
+                            <span className="kiosk-a11y-drawer-title">{t("accessibility")}</span>
                         </div>
 
                         {open ? (
@@ -56,15 +59,15 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                         aria-controls="kiosk-a11y-drawer"
                         aria-label={
                             open
-                                ? "Close accessibility options"
-                                : "Open accessibility options"
+                                ? t("close_accessibility_options")
+                                : t("open_accessibility_options")
                         }
-                        title="Accessibility"
+                        title={t("accessibility")}
                     >
                         <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
                             {open ? "›" : "‹"}
                         </span>
-                        <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
+                        <span className="kiosk-a11y-edge-tab-label">{t("accessibility")}</span>
                     </button>
                 </div>
             </div>
