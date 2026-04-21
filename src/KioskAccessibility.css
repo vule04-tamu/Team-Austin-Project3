@@ -75,8 +75,8 @@
         var(--kiosk-a11y-drawer-max),
         calc(100vw - var(--kiosk-a11y-tab-w) - var(--kiosk-a11y-tab-overhang) - 16px)
     );
-    min-height: 260px;
-    max-height: min(70dvh, 560px);
+    min-height: 340px;
+    max-height: none;
     display: flex;
     flex-direction: column;
     background: var(--kiosk-a11y-panel-bg);
@@ -138,19 +138,10 @@
     flex: 1;
     min-height: 0;
     padding: 16px 18px 28px;
-    overflow-y: auto;
+    overflow: visible;
     display: grid;
     align-content: start;
-    gap: 14px;
-}
-
-.kiosk-a11y-drawer-body::-webkit-scrollbar {
-    width: 8px;
-}
-
-.kiosk-a11y-drawer-body::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.18);
-    border-radius: 999px;
+    gap: 12px;
 }
 
 /*
@@ -212,10 +203,10 @@
 .kiosk-a11y-section,
 .kiosk-a11y-language,
 .kiosk-a11y-text-size {
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    padding: 12px;
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
 }
 
 .kiosk-a11y-section {

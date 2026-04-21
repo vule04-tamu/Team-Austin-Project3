@@ -1,72 +1,121 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import "./KioskScreenMagnifier.css";
 
 /**
- * Pointer-follow zoom on the captured subtree using compositor transforms (no DOM rasterization).
- * Contrast/filter should live on a parent of `captureRef` so React style updates do not clobber transform.
+ * Global circular screen magnifier.
+ * Keeps the base UI unchanged and shows magnified content only inside the lens.
  */
-export default function KioskScreenMagnifier({ captureRef, enabled, zoom }) {
-    const pendingRef = useRef(null);
-    const rafRef = useRef(0);
+export default function KioskScreenMagnifier({
+    captureRef,
+    enabled,
+    zoom,
+    lensSize = 170,
+}) {
+    const [pointer, setPointer] = useState(() => ({
+        x: typeof window !== "undefined" ? window.innerWidth / 2 : 0,
+        y: typeof window !== "undefined" ? window.innerHeight / 2 : 0,
+        active: false,
+    }));
+    const [snapshot, setSnapshot] = useState("");
 
     useEffect(() => {
         const el = captureRef?.current;
         if (!enabled || !el) {
+            setPointer((prev) => ({ ...prev, active: false }));
+            setSnapshot("");
             return;
         }
 
-        const apply = () => {
-            const p = pendingRef.current;
-            if (!p || !el.isConnected) return;
-            const rect = el.getBoundingClientRect();
-            const ox = Math.min(Math.max(p.cx - rect.left, 0), rect.width);
-            const oy = Math.min(Math.max(p.cy - rect.top, 0), rect.height);
-            el.style.transformOrigin = `${ox}px ${oy}px`;
-            el.style.transform = `scale(${zoom})`;
-            el.style.willChange = "transform";
-            el.classList.add("kiosk-mag-inner--active");
+        let rafId = 0;
+        let syncQueued = false;
+
+        const syncSnapshot = () => {
+            syncQueued = false;
+            if (!el.isConnected) return;
+            const clone = el.cloneNode(true);
+            setSnapshot(clone.outerHTML);
         };
 
-        const flush = () => {
-            rafRef.current = 0;
-            apply();
-        };
-
-        const queue = (cx, cy) => {
-            pendingRef.current = { cx, cy };
-            if (!rafRef.current) {
-                rafRef.current = requestAnimationFrame(flush);
-            }
+        const queueSync = () => {
+            if (syncQueued) return;
+            syncQueued = true;
+            rafId = requestAnimationFrame(syncSnapshot);
         };
 
         const onMove = (e) => {
-            const cx = e.clientX ?? e.touches?.[0]?.clientX;
-            const cy = e.clientY ?? e.touches?.[0]?.clientY;
-            if (cx == null || cy == null) return;
-            queue(cx, cy);
+            const x = e.clientX ?? e.touches?.[0]?.clientX;
+            const y = e.clientY ?? e.touches?.[0]?.clientY;
+            if (x == null || y == null) return;
+            setPointer({ x, y, active: true });
         };
 
-        const rect0 = el.getBoundingClientRect();
-        queue(rect0.left + rect0.width / 2, rect0.top + rect0.height / 2);
-        flush();
+        const onLeave = () => {
+            setPointer((prev) => ({ ...prev, active: false }));
+        };
 
+        const observer = new MutationObserver(queueSync);
+        observer.observe(el, {
+            subtree: true,
+            childList: true,
+            characterData: true,
+            attributes: true,
+        });
+
+        syncSnapshot();
         window.addEventListener("pointermove", onMove, { passive: true });
         window.addEventListener("touchmove", onMove, { passive: true });
+        window.addEventListener("pointerleave", onLeave, { passive: true });
+        window.addEventListener("blur", onLeave);
+        window.addEventListener("resize", queueSync, { passive: true });
+        window.addEventListener("scroll", queueSync, { passive: true });
 
         return () => {
+            observer.disconnect();
             window.removeEventListener("pointermove", onMove);
             window.removeEventListener("touchmove", onMove);
-            if (rafRef.current) {
-                cancelAnimationFrame(rafRef.current);
-                rafRef.current = 0;
+            window.removeEventListener("pointerleave", onLeave);
+            window.removeEventListener("blur", onLeave);
+            window.removeEventListener("resize", queueSync);
+            window.removeEventListener("scroll", queueSync);
+            if (rafId) {
+                cancelAnimationFrame(rafId);
             }
-            pendingRef.current = null;
-            el.style.removeProperty("transform");
-            el.style.removeProperty("transform-origin");
-            el.style.removeProperty("will-change");
-            el.classList.remove("kiosk-mag-inner--active");
         };
-    }, [captureRef, enabled, zoom]);
+    }, [captureRef, enabled]);
 
-    return null;
+    if (!enabled || !snapshot || !pointer.active) return null;
+
+    const lensHalf = lensSize / 2;
+    const lensLeft = pointer.x - lensHalf;
+    const lensTop = pointer.y - lensHalf;
+
+    const tx = pointer.x * (1 - zoom);
+    const ty = pointer.y * (1 - zoom);
+
+    return (
+        <div
+            className="kiosk-screen-magnifier"
+            style={{
+                width: lensSize,
+                height: lensSize,
+                left: lensLeft,
+                top: lensTop,
+            }}
+            aria-hidden
+        >
+            <div
+                className="kiosk-screen-magnifier-content"
+                style={{
+                    transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
+                }}
+            >
+                <div
+                    className="kiosk-screen-magnifier-snapshot"
+                    // Snapshot is generated from the existing app DOM and displayed as a read-only overlay.
+                    dangerouslySetInnerHTML={{ __html: snapshot }}
+                />
+            </div>
+            <div className="kiosk-screen-magnifier-label">{zoom}x</div>
+        </div>
+    );
 }

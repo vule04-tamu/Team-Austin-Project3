@@ -7,12 +7,74 @@
   min-height: 100svh;
 }
 
+.app-routes-shell {
+  min-height: 100svh;
+}
+
 .app-header {
   position: fixed;
   top: 16px;
   right: 16px;
   z-index: 1000;
   padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.global-mag-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.global-mag-toggle {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-h);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 9px;
+  cursor: pointer;
+}
+
+.global-mag-toggle.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.global-mag-zooms {
+  display: flex;
+  gap: 4px;
+}
+
+.global-mag-zoom-btn {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.global-mag-zoom-btn.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+}
+
+.global-mag-zoom-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {

@@ -1,11 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
-import KioskAccessibilityToolbar, {
-    loadMagnifierPrefs,
-    persistMagnifierPrefs,
-} from "./KioskAccessibilityToolbar.jsx";
-import KioskScreenMagnifier from "./KioskScreenMagnifier.jsx";
+import KioskAccessibilityToolbar from "./KioskAccessibilityToolbar.jsx";
 import KioskAccessibilityPanel from "./KioskAccessibilityPanel.jsx";
 import "./KioskAccessibility.css";
 import LanguageSwitcher from "./LanguageSwitcher.jsx";
@@ -97,14 +93,8 @@ export default function CustomerView() {
     const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
 
     const contrastLayerRef = useRef(null);
-    const magInnerRef = useRef(null);
     const [accessibilityOpen, setAccessibilityOpen] = useState(false);
     const [contrastPct, setContrastPct] = useState(100);
-    const magInitial = useMemo(() => loadMagnifierPrefs(), []);
-    const [magnifierEnabled, setMagnifierEnabled] = useState(
-        magInitial.enabled,
-    );
-    const [magnifierZoom, setMagnifierZoom] = useState(magInitial.zoom);
 
     useEffect(() => {
         const raw = localStorage.getItem(CONTRAST_LS_KEY);
@@ -119,10 +109,6 @@ export default function CustomerView() {
     useEffect(() => {
         localStorage.setItem(CONTRAST_LS_KEY, String(contrastPct));
     }, [contrastPct]);
-
-    useEffect(() => {
-        persistMagnifierPrefs(magnifierEnabled, magnifierZoom);
-    }, [magnifierEnabled, magnifierZoom]);
 
     useEffect(() => {
         (async () => {
@@ -359,10 +345,6 @@ export default function CustomerView() {
             <KioskAccessibilityToolbar
                 contrastPct={contrastPct}
                 onContrastChange={setContrastPct}
-                magnifierEnabled={magnifierEnabled}
-                onMagnifierEnabledChange={setMagnifierEnabled}
-                magnifierZoom={magnifierZoom}
-                onMagnifierZoomChange={setMagnifierZoom}
             />
             <LanguageSwitcher layout="embedded" />
             <div className="kiosk-a11y-text-size">
@@ -393,18 +375,13 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+                    <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-loading">
                             <div className="kiosk-spinner" />
                             <span>{t("loading_menu")}</span>
                         </div>
                     </div>
                 </div>
-                <KioskScreenMagnifier
-                    captureRef={magInnerRef}
-                    enabled={magnifierEnabled}
-                    zoom={magnifierZoom}
-                />
             </div>
         );
     }
@@ -418,17 +395,12 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+                    <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-loading" style={{ color: "#ff6b9d" }}>
                             {error}
                         </div>
                     </div>
                 </div>
-                <KioskScreenMagnifier
-                    captureRef={magInnerRef}
-                    enabled={magnifierEnabled}
-                    zoom={magnifierZoom}
-                />
             </div>
         );
     }
@@ -442,7 +414,7 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+                    <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-success">
                             <h2>{t("order_placed")}</h2>
                             <p>{t("thank_you")}</p>
@@ -463,11 +435,6 @@ export default function CustomerView() {
                         </div>
                     </div>
                 </div>
-                <KioskScreenMagnifier
-                    captureRef={magInnerRef}
-                    enabled={magnifierEnabled}
-                    zoom={magnifierZoom}
-                />
             </div>
         );
     }
@@ -501,7 +468,7 @@ export default function CustomerView() {
                 className="kiosk-contrast-layer"
                 style={contrastStyle}
             >
-            <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+            <div className="kiosk-contrast-mag-inner">
             <div className="kiosk-hero kiosk-hero-compact">
                 <h1>{t('welcome')}</h1>
                 <p>{t('pick_category')}</p>
@@ -815,12 +782,6 @@ export default function CustomerView() {
 
             {toast && <div className="kiosk-toast">{toast}</div>}
             </div>
-
-            <KioskScreenMagnifier
-                captureRef={magInnerRef}
-                enabled={magnifierEnabled}
-                zoom={magnifierZoom}
-            />
         </div>
     );
 }
