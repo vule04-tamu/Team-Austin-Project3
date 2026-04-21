@@ -103,7 +103,8 @@ export default function KioskScreenMagnifier({
     const lensHalf = lensSize / 2;
     const lensLeft = pointer.x - lensHalf;
     const lensTop = pointer.y - lensHalf;
-    const offset = lensHalf * (1 - zoom);
+    const tx = pointer.x * (1 - zoom);
+    const ty = pointer.y * (1 - zoom);
 
     return (
         <div
@@ -128,7 +129,7 @@ export default function KioskScreenMagnifier({
                 <div
                     className="kiosk-screen-magnifier-content"
                     style={{
-                        transform: `translate(${offset}px, ${offset}px) scale(${zoom})`,
+                        transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
                     }}
                 >
                     <div
@@ -137,7 +138,7 @@ export default function KioskScreenMagnifier({
                             left: snapshot.rect.left,
                             top: snapshot.rect.top,
                             width: snapshot.rect.width,
-                            minHeight: snapshot.rect.height,
+                            height: snapshot.rect.height,
                         }}
                     >
                         <div
@@ -152,7 +153,6 @@ export default function KioskScreenMagnifier({
                 <span className="kiosk-screen-magnifier-crosshair-x" />
                 <span className="kiosk-screen-magnifier-crosshair-y" />
             </div>
-            <div className="kiosk-screen-magnifier-label">{zoom}x</div>
         </div>
     );
 }

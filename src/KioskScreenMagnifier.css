@@ -5,10 +5,8 @@
     overflow: hidden;
     pointer-events: none;
     border: 3px solid rgba(255, 255, 255, 0.9);
-    box-shadow:
-        0 10px 24px rgba(0, 0, 0, 0.4),
-        0 0 0 2px rgba(26, 10, 46, 0.55) inset;
-    background: rgba(15, 9, 24, 0.98);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+    background: transparent;
 }
 
 .kiosk-screen-magnifier-scene {
@@ -54,18 +52,4 @@
 .kiosk-screen-magnifier-crosshair-y {
     width: 2px;
     height: 42px;
-}
-
-.kiosk-screen-magnifier-label {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.55);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.02em;
 }
