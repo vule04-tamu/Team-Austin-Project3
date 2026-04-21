@@ -1,6 +1,6 @@
 :root {
     --kiosk-a11y-tab-w: 44px;
-    --kiosk-a11y-tab-overhang: 12px;
+    --kiosk-a11y-tab-overhang: 0px;
     --kiosk-a11y-drawer-max: 320px;
     --kiosk-a11y-top-offset: clamp(78px, 14vh, 170px);
     --kiosk-a11y-radius: 14px;
@@ -36,7 +36,7 @@
 .kiosk-a11y-dock-shell {
     position: fixed;
     top: var(--kiosk-a11y-top-offset);
-    right: calc(-1 * var(--kiosk-a11y-tab-overhang));
+    right: 0;
     transform: none;
     width: calc(var(--kiosk-a11y-tab-w) + var(--kiosk-a11y-tab-overhang));
     max-width: 100vw;
@@ -50,8 +50,7 @@
     width: min(
         calc(
             var(--kiosk-a11y-drawer-max) +
-                var(--kiosk-a11y-tab-w) +
-                var(--kiosk-a11y-tab-overhang)
+                var(--kiosk-a11y-tab-w)
         ),
         100vw
     );
@@ -105,7 +104,7 @@
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-start;
     padding: 16px 18px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -115,23 +114,6 @@
     font-size: 1.15rem;
     color: #fff;
     letter-spacing: 0.02em;
-}
-
-.kiosk-a11y-drawer-close {
-    width: 40px;
-    height: 40px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.08);
-    color: #fff;
-    font-size: 1.45rem;
-    line-height: 1;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.kiosk-a11y-drawer-close:hover {
-    background: rgba(255, 255, 255, 0.16);
 }
 
 .kiosk-a11y-drawer-body {

@@ -41,14 +41,6 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                     >
                         <div className="kiosk-a11y-drawer-header">
                             <span className="kiosk-a11y-drawer-title">Accessibility</span>
-                            <button
-                                type="button"
-                                className="kiosk-a11y-drawer-close"
-                                onClick={() => onOpenChange(false)}
-                                aria-label="Close accessibility panel"
-                            >
-                                ×
-                            </button>
                         </div>
 
                         {open ? (
