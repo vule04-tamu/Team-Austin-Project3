@@ -63,13 +63,13 @@
 }
 
 /*
-  Drawer opens to the LEFT of the tab.
+  Drawer stays attached to the right side of the screen.
   Hidden state pushes it right, offscreen.
 */
 .kiosk-a11y-drawer {
     position: absolute;
     top: 0;
-    right: var(--kiosk-a11y-tab-w);
+    right: 0;
     width: min(
         var(--kiosk-a11y-drawer-max),
         calc(100vw - var(--kiosk-a11y-tab-w) - var(--kiosk-a11y-tab-overhang) - 16px)
@@ -80,8 +80,8 @@
     flex-direction: column;
     background: var(--kiosk-a11y-panel-bg);
     border: 1px solid var(--kiosk-a11y-border);
-    border-right: none;
-    border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
+    border-left: none;
+    border-radius: 0 var(--kiosk-a11y-radius) var(--kiosk-a11y-radius) 0;
     box-shadow: var(--kiosk-a11y-shadow);
     overflow: hidden;
     pointer-events: auto;
@@ -127,13 +127,13 @@
 }
 
 /*
-  Folder tab: attached to drawer on the LEFT side,
-  rounded on the OUTER right side.
+  Folder tab sits on the screen edge when closed.
+  Once open, it rides with the panel and stays attached to its left edge.
 */
 .kiosk-a11y-edge-tab {
     position: absolute;
     top: 18px;
-    right: 0;
+    left: 0;
     width: calc(var(--kiosk-a11y-tab-w) + var(--kiosk-a11y-tab-overhang));
     min-height: 148px;
     padding: 14px 8px;
@@ -143,8 +143,8 @@
     justify-content: center;
     gap: 10px;
     border: 1px solid var(--kiosk-a11y-border);
-    border-left: none;
-    border-radius: 0 var(--kiosk-a11y-radius) var(--kiosk-a11y-radius) 0;
+    border-right: none;
+    border-radius: var(--kiosk-a11y-radius) 0 0 var(--kiosk-a11y-radius);
     background: var(--kiosk-a11y-panel-bg);
     box-shadow: var(--kiosk-a11y-shadow);
     color: #fff;
