@@ -22,13 +22,11 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                     role="presentation"
                     aria-hidden
                     onClick={() => onOpenChange(false)}
-                    data-html2canvas-ignore
                 />
             )}
 
             <div
                 className={`kiosk-a11y-dock-shell ${open ? "is-open" : ""}`}
-                data-html2canvas-ignore
             >
                 <div className="kiosk-a11y-dock">
                     <div className="kiosk-a11y-rail">

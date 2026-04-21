@@ -1,6 +1,6 @@
 /*
   Accessibility dock + drawer + toolbar for customer kiosk.
-  z-index above magnifier lens (9200) so tab stays visible and clickable.
+  z-index above main kiosk content so the tab stays visible and clickable.
 */
 
 :root {

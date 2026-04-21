@@ -95,12 +95,14 @@ export default function CustomerView() {
     const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
 
     const contrastLayerRef = useRef(null);
+    const magInnerRef = useRef(null);
     const [accessibilityOpen, setAccessibilityOpen] = useState(false);
     const [contrastPct, setContrastPct] = useState(100);
-    const [magnifierEnabled, setMagnifierEnabled] = useState(false);
-    const [magnifierZoom, setMagnifierZoom] = useState(
-        () => loadMagnifierPrefs().zoom,
+    const magInitial = useMemo(() => loadMagnifierPrefs(), []);
+    const [magnifierEnabled, setMagnifierEnabled] = useState(
+        magInitial.enabled,
     );
+    const [magnifierZoom, setMagnifierZoom] = useState(magInitial.zoom);
 
     useEffect(() => {
         const raw = localStorage.getItem(CONTRAST_LS_KEY);
@@ -119,10 +121,6 @@ export default function CustomerView() {
     useEffect(() => {
         persistMagnifierPrefs(magnifierEnabled, magnifierZoom);
     }, [magnifierEnabled, magnifierZoom]);
-
-    useEffect(() => {
-        if (!accessibilityOpen) setMagnifierEnabled(false);
-    }, [accessibilityOpen]);
 
     useEffect(() => {
         (async () => {
@@ -383,13 +381,15 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <div className="kiosk-loading">
-                        <div className="kiosk-spinner" />
-                        <span>{t("loading_menu")}</span>
+                    <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+                        <div className="kiosk-loading">
+                            <div className="kiosk-spinner" />
+                            <span>{t("loading_menu")}</span>
+                        </div>
                     </div>
                 </div>
                 <KioskScreenMagnifier
-                    captureRef={contrastLayerRef}
+                    captureRef={magInnerRef}
                     enabled={magnifierEnabled}
                     zoom={magnifierZoom}
                 />
@@ -406,12 +406,14 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <div className="kiosk-loading" style={{ color: "#ff6b9d" }}>
-                        {error}
+                    <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+                        <div className="kiosk-loading" style={{ color: "#ff6b9d" }}>
+                            {error}
+                        </div>
                     </div>
                 </div>
                 <KioskScreenMagnifier
-                    captureRef={contrastLayerRef}
+                    captureRef={magInnerRef}
                     enabled={magnifierEnabled}
                     zoom={magnifierZoom}
                 />
@@ -428,27 +430,29 @@ export default function CustomerView() {
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
-                    <div className="kiosk-success">
-                        <h2>{t("order_placed")}</h2>
-                        <p>{t("thank_you")}</p>
-                        <div className="kiosk-success-order">
-                            {t("order_number")}
-                            {orderNumber}
+                    <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
+                        <div className="kiosk-success">
+                            <h2>{t("order_placed")}</h2>
+                            <p>{t("thank_you")}</p>
+                            <div className="kiosk-success-order">
+                                {t("order_number")}
+                                {orderNumber}
+                            </div>
+                            <button
+                                type="button"
+                                className="kiosk-new-order-btn"
+                                onClick={() => {
+                                    setOrderSuccess(false);
+                                    setOrderNumber(null);
+                                }}
+                            >
+                                {t("start_new")}
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            className="kiosk-new-order-btn"
-                            onClick={() => {
-                                setOrderSuccess(false);
-                                setOrderNumber(null);
-                            }}
-                        >
-                            {t("start_new")}
-                        </button>
                     </div>
                 </div>
                 <KioskScreenMagnifier
-                    captureRef={contrastLayerRef}
+                    captureRef={magInnerRef}
                     enabled={magnifierEnabled}
                     zoom={magnifierZoom}
                 />
@@ -485,6 +489,7 @@ export default function CustomerView() {
                 className="kiosk-contrast-layer"
                 style={contrastStyle}
             >
+            <div ref={magInnerRef} className="kiosk-contrast-mag-inner">
             <div className="kiosk-hero kiosk-hero-compact">
                 <h1>{t('welcome')}</h1>
                 <p>{t('pick_category')}</p>
@@ -644,6 +649,7 @@ export default function CustomerView() {
                     )}
                 </aside>
             </div>
+            </div>
 
             {customizeModal && (
                 <div
@@ -799,7 +805,7 @@ export default function CustomerView() {
             </div>
 
             <KioskScreenMagnifier
-                captureRef={contrastLayerRef}
+                captureRef={magInnerRef}
                 enabled={magnifierEnabled}
                 zoom={magnifierZoom}
             />

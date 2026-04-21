@@ -1,74 +1,90 @@
-import { useEffect } from "react";
+import KioskContrastSlider from "./KioskContrastSlider.jsx";
 import "./KioskAccessibility.css";
 
-/**
- * Tab stays pinned to the right edge.
- * Drawer expands left from the tab like a folder tab being pulled out.
- */
-export default function KioskAccessibilityPanel({ open, onOpenChange, children }) {
-    useEffect(() => {
-        if (!open) return;
-        const onKey = (e) => {
-            if (e.key === "Escape") onOpenChange(false);
+const MAGNIFIER_LS_KEY = "customerKioskMagnifierPrefs";
+
+/** Discrete zoom steps (must match previous lens semantics: factor ≥ 1). */
+const ZOOM_LEVELS = [1.25, 1.5, 2, 2.5, 3];
+
+function nearestZoom(z) {
+    const n = Number(z);
+    if (!Number.isFinite(n)) return 1.5;
+    let best = ZOOM_LEVELS[0];
+    let bestD = Math.abs(n - best);
+    for (const v of ZOOM_LEVELS) {
+        const d = Math.abs(n - v);
+        if (d < bestD) {
+            best = v;
+            bestD = d;
+        }
+    }
+    return best;
+}
+
+export function loadMagnifierPrefs() {
+    try {
+        const raw = localStorage.getItem(MAGNIFIER_LS_KEY);
+        if (!raw) return { zoom: 1.5, enabled: false };
+        const o = JSON.parse(raw);
+        return {
+            zoom: nearestZoom(o.zoom ?? 1.5),
+            enabled: Boolean(o.enabled),
         };
-        window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [open, onOpenChange]);
+    } catch {
+        return { zoom: 1.5, enabled: false };
+    }
+}
 
+export function persistMagnifierPrefs(enabled, zoom) {
+    try {
+        localStorage.setItem(
+            MAGNIFIER_LS_KEY,
+            JSON.stringify({ enabled, zoom: nearestZoom(zoom) }),
+        );
+    } catch {
+        /* ignore quota / private mode */
+    }
+}
+
+export default function KioskAccessibilityToolbar({
+    contrastPct,
+    onContrastChange,
+    magnifierEnabled,
+    onMagnifierEnabledChange,
+    magnifierZoom,
+    onMagnifierZoomChange,
+}) {
     return (
-        <>
-            {open && (
-                <div
-                    className="kiosk-a11y-backdrop"
-                    role="presentation"
-                    aria-hidden
-                    onClick={() => onOpenChange(false)}
-                    data-html2canvas-ignore
-                />
-            )}
+        <div className="kiosk-a11y-section">
+            <KioskContrastSlider value={contrastPct} onChange={onContrastChange} />
 
-            <div
-                className={`kiosk-a11y-dock-shell ${open ? "is-open" : ""}`}
-                data-html2canvas-ignore
-            >
-                <div className="kiosk-a11y-dock">
-                    <aside
-                        id="kiosk-a11y-drawer"
-                        className={`kiosk-a11y-drawer ${open ? "is-open" : ""}`}
-                        aria-hidden={!open}
-                    >
-                        <div className="kiosk-a11y-drawer-header">
-                            <span className="kiosk-a11y-drawer-title">Accessibility</span>
-                            <button
-                                type="button"
-                                className="kiosk-a11y-drawer-close"
-                                onClick={() => onOpenChange(false)}
-                                aria-label="Close accessibility panel"
-                            >
-                                ×
-                            </button>
-                        </div>
-
-                        {open ? (
-                            <div className="kiosk-a11y-drawer-body">{children}</div>
-                        ) : null}
-                    </aside>
-
-                    <button
-                        type="button"
-                        className={`kiosk-a11y-edge-tab ${open ? "is-open" : ""}`}
-                        onClick={() => onOpenChange(!open)}
-                        aria-expanded={open}
-                        aria-controls="kiosk-a11y-drawer"
-                        title="Accessibility options"
-                    >
-                        <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
-                            {open ? "›" : "‹"}
-                        </span>
-                        <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
-                    </button>
+            <div className="kiosk-a11y-mag">
+                <span className="kiosk-a11y-label" id="kiosk-a11y-mag-label">
+                    Magnifier
+                </span>
+                <button
+                    type="button"
+                    className={`kiosk-a11y-toggle ${magnifierEnabled ? "on" : ""}`}
+                    onClick={() => onMagnifierEnabledChange(!magnifierEnabled)}
+                    aria-pressed={magnifierEnabled}
+                    aria-describedby="kiosk-a11y-mag-label"
+                >
+                    {magnifierEnabled ? "On" : "Off"}
+                </button>
+                <div className="kiosk-a11y-zooms" role="group" aria-label="Magnifier zoom">
+                    {ZOOM_LEVELS.map((z) => (
+                        <button
+                            key={z}
+                            type="button"
+                            className={`kiosk-a11y-zoom-btn ${magnifierZoom === z ? "active" : ""}`}
+                            onClick={() => onMagnifierZoomChange(z)}
+                            disabled={!magnifierEnabled}
+                        >
+                            {z}×
+                        </button>
+                    ))}
                 </div>
             </div>
-        </>
+        </div>
     );
 }

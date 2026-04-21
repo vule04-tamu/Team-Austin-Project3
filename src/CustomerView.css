@@ -1195,3 +1195,21 @@
     background: #fff0f6;
     color: var(--boba-pink);
 }
+
+/* Contrast filter on outer node; transform-based magnifier on inner (see KioskScreenMagnifier). */
+.kiosk-contrast-layer {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    z-index: 5;
+}
+
+.kiosk-contrast-mag-inner {
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
