@@ -7,7 +7,7 @@ export default function LanguageSwitcher({ layout = 'floating' }) {
     return (
       <div className="kiosk-a11y-language">
         <label className="kiosk-a11y-section-label" htmlFor="kiosk-lang-select">
-          Language
+          Translate
         </label>
         <select
           id="kiosk-lang-select"

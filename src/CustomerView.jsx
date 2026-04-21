@@ -8,6 +8,8 @@ import KioskAccessibilityToolbar, {
 import KioskScreenMagnifier from "./KioskScreenMagnifier.jsx";
 import KioskAccessibilityPanel from "./KioskAccessibilityPanel.jsx";
 import "./KioskAccessibility.css";
+import LanguageSwitcher from "./LanguageSwitcher.jsx";
+import { TextSizeButtonRow } from "./TextSizeControl.jsx";
 import {
     defaultCustomizationSelection,
     ensureIceSugarDefaults,
@@ -353,14 +355,24 @@ export default function CustomerView() {
     const contrastStyle = { filter: `contrast(${contrastPct}%)` };
 
     const a11yToolbar = (
-        <KioskAccessibilityToolbar
-            contrastPct={contrastPct}
-            onContrastChange={setContrastPct}
-            magnifierEnabled={magnifierEnabled}
-            onMagnifierEnabledChange={setMagnifierEnabled}
-            magnifierZoom={magnifierZoom}
-            onMagnifierZoomChange={setMagnifierZoom}
-        />
+        <>
+            <KioskAccessibilityToolbar
+                contrastPct={contrastPct}
+                onContrastChange={setContrastPct}
+                magnifierEnabled={magnifierEnabled}
+                onMagnifierEnabledChange={setMagnifierEnabled}
+                magnifierZoom={magnifierZoom}
+                onMagnifierZoomChange={setMagnifierZoom}
+            />
+            <LanguageSwitcher layout="embedded" />
+            <div className="kiosk-a11y-text-size">
+                <span className="kiosk-a11y-section-label">Text Size</span>
+                <TextSizeButtonRow
+                    className="kiosk-a11y-text-size-row"
+                    buttonClassName="kiosk-a11y-size-btn"
+                />
+            </div>
+        </>
     );
 
     const a11yChrome = (
