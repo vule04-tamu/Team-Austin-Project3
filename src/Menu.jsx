@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
-import LanguageSwitcher from "./LanguageSwitcher";
 import "./Menu.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -82,6 +81,7 @@ export default function Menu() {
   }, [menuItems]);
 
   const fmt = (n) => `$${n.toFixed(2)}`;
+  const sectionClassName = (labelKey) => `menu-board-col section-${labelKey}`;
 
   if (loading) {
     return (
@@ -118,10 +118,9 @@ export default function Menu() {
         type="button"
         className="menu-board-back"
         onClick={() => navigate("/")}
-      >
-        {t("back")}
-      </button>
-      <LanguageSwitcher />
+        >
+          {t("back")}
+        </button>
       <header className="menu-board-header">
         <h1 className="shop-name">{t('shop_name')}</h1>
         <div className="divider">
@@ -137,22 +136,29 @@ export default function Menu() {
           const items = names.map((n) => byName[n]).filter(Boolean);
           if (items.length === 0) return null;
           return (
-            <section key={labelKey} className="menu-board-col">
+            <section key={labelKey} className={sectionClassName(labelKey)}>
               <h2 className="menu-board-col-title">{t(labelKey)}</h2>
               <div className="menu-board-items">
                 {items.map((item) => {
                   const lg = largeByBase[item.name];
                   return (
                     <div key={item.id} className="menu-board-item">
-                      <p className="item-name">{item.name}</p>
-                      <div className="item-footer">
-                        <span className="item-price">
-                          {lg
-                            ? `${t('reg')} ${fmt(item.price)} / ${t('lg')} ${fmt(lg.price)}`
-                            : fmt(item.price)}
-                        </span>
+                      <div className="item-main">
+                        <p className="item-name">{item.name}</p>
                         {item.customizable && (
                           <span className="item-badge">{t('custom_badge')}</span>
+                        )}
+                      </div>
+                      <div className="item-footer">
+                        {lg ? (
+                          <>
+                            <span className="item-price item-price-split">
+                              <span>{t('reg')} {fmt(item.price)}</span>
+                              <span>{t('lg')} {fmt(lg.price)}</span>
+                            </span>
+                          </>
+                        ) : (
+                          <span className="item-price">{fmt(item.price)}</span>
                         )}
                       </div>
                     </div>
