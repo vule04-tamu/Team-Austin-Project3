@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import "./KioskAccessibility.css";
 
 /**
- * Rail: drawer + tab share one vertical edge so the tab reads as part of the panel.
+ * Right-edge drawer: drawer surface + narrow handle share one rail (normal drawer chrome).
  */
 export default function KioskAccessibilityPanel({ open, onOpenChange, children }) {
     useEffect(() => {
@@ -57,10 +57,13 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                             onClick={() => onOpenChange(!open)}
                             aria-expanded={open}
                             aria-controls="kiosk-a11y-drawer"
-                            title="Accessibility options"
+                            aria-label={
+                                open
+                                    ? "Close accessibility options"
+                                    : "Open accessibility options"
+                            }
+                            title="Accessibility"
                         >
-                            {/* column-reverse in CSS — label at “bottom”, chevron at “top” of tab spine */}
-                            <span className="kiosk-a11y-edge-tab-label">Accessibility</span>
                             <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
                                 {open ? "‹" : "›"}
                             </span>
