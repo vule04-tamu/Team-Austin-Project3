@@ -16,13 +16,13 @@ export default function KioskScreenMagnifier({
         y: typeof window !== "undefined" ? window.innerHeight / 2 : 0,
         active: false,
     }));
-    const [snapshot, setSnapshot] = useState("");
+    const [snapshot, setSnapshot] = useState(null);
 
     useEffect(() => {
         const el = captureRef?.current;
         if (!enabled || !el) {
             setPointer((prev) => ({ ...prev, active: false }));
-            setSnapshot("");
+            setSnapshot(null);
             return;
         }
 
@@ -32,8 +32,23 @@ export default function KioskScreenMagnifier({
         const syncSnapshot = () => {
             syncQueued = false;
             if (!el.isConnected) return;
+
             const clone = el.cloneNode(true);
-            setSnapshot(clone.outerHTML);
+            const rect = el.getBoundingClientRect();
+
+            setSnapshot({
+                html: clone.outerHTML,
+                rect: {
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                },
+                viewport: {
+                    width: window.innerWidth,
+                    height: window.innerHeight,
+                },
+            });
         };
 
         const queueSync = () => {
@@ -88,9 +103,7 @@ export default function KioskScreenMagnifier({
     const lensHalf = lensSize / 2;
     const lensLeft = pointer.x - lensHalf;
     const lensTop = pointer.y - lensHalf;
-
-    const tx = pointer.x * (1 - zoom);
-    const ty = pointer.y * (1 - zoom);
+    const offset = lensHalf * (1 - zoom);
 
     return (
         <div
@@ -104,16 +117,40 @@ export default function KioskScreenMagnifier({
             aria-hidden
         >
             <div
-                className="kiosk-screen-magnifier-content"
+                className="kiosk-screen-magnifier-scene"
                 style={{
-                    transform: `translate(${tx}px, ${ty}px) scale(${zoom})`,
+                    width: snapshot.viewport.width,
+                    height: snapshot.viewport.height,
+                    left: -lensLeft,
+                    top: -lensTop,
                 }}
             >
                 <div
-                    className="kiosk-screen-magnifier-snapshot"
-                    // Snapshot is generated from the existing app DOM and displayed as a read-only overlay.
-                    dangerouslySetInnerHTML={{ __html: snapshot }}
-                />
+                    className="kiosk-screen-magnifier-content"
+                    style={{
+                        transform: `translate(${offset}px, ${offset}px) scale(${zoom})`,
+                    }}
+                >
+                    <div
+                        className="kiosk-screen-magnifier-capture"
+                        style={{
+                            left: snapshot.rect.left,
+                            top: snapshot.rect.top,
+                            width: snapshot.rect.width,
+                            minHeight: snapshot.rect.height,
+                        }}
+                    >
+                        <div
+                            className="kiosk-screen-magnifier-snapshot"
+                            // Snapshot is generated from the existing app DOM and displayed as a read-only overlay.
+                            dangerouslySetInnerHTML={{ __html: snapshot.html }}
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="kiosk-screen-magnifier-crosshair">
+                <span className="kiosk-screen-magnifier-crosshair-x" />
+                <span className="kiosk-screen-magnifier-crosshair-y" />
             </div>
             <div className="kiosk-screen-magnifier-label">{zoom}x</div>
         </div>

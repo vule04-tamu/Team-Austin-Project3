@@ -11,16 +11,49 @@
     background: rgba(15, 9, 24, 0.98);
 }
 
+.kiosk-screen-magnifier-scene {
+    position: absolute;
+    pointer-events: none;
+}
+
 .kiosk-screen-magnifier-content {
     position: absolute;
     inset: 0;
     transform-origin: 0 0;
 }
 
+.kiosk-screen-magnifier-capture {
+    position: absolute;
+}
+
 .kiosk-screen-magnifier-snapshot {
-    position: fixed;
+    display: block;
+    pointer-events: none;
+}
+
+.kiosk-screen-magnifier-crosshair {
+    position: absolute;
     inset: 0;
     pointer-events: none;
+}
+
+.kiosk-screen-magnifier-crosshair-x,
+.kiosk-screen-magnifier-crosshair-y {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    background: rgba(255, 255, 255, 0.82);
+    transform: translate(-50%, -50%);
+}
+
+.kiosk-screen-magnifier-crosshair-x {
+    width: 42px;
+    height: 2px;
+}
+
+.kiosk-screen-magnifier-crosshair-y {
+    width: 2px;
+    height: 42px;
 }
 
 .kiosk-screen-magnifier-label {
