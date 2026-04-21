@@ -34,7 +34,7 @@ const SECTIONS = [
 
 export default function Menu() {
   const navigate = useNavigate();
-  const { t, translateMenuItemName } = useLanguage();
+  const { language, t, translateMenuItemName } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -51,22 +51,32 @@ export default function Menu() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchMenu = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${API_BASE}/api/menu`);
+        const params = new URLSearchParams({ lang: language });
+        const response = await fetch(`${API_BASE}/api/menu?${params.toString()}`);
         if (!response.ok) throw new Error("Failed to fetch menu");
-        setMenuItems(await response.json());
+        const data = await response.json();
+        if (cancelled) return;
+        setMenuItems(data);
         setError(null);
       } catch (err) {
+        if (cancelled) return;
         setError(err.message);
         setMenuItems([]);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchMenu();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
 
   const byName = Object.fromEntries(menuItems.map((item) => [item.name, item]));
 
@@ -82,6 +92,8 @@ export default function Menu() {
 
   const fmt = (n) => `$${n.toFixed(2)}`;
   const sectionClassName = (labelKey) => `menu-board-col section-${labelKey}`;
+  const displayMenuItemName = (item) =>
+    item.displayName || translateMenuItemName(item.name);
 
   if (loading) {
     return (
@@ -144,7 +156,7 @@ export default function Menu() {
                   return (
                     <div key={item.id} className="menu-board-item">
                       <div className="item-main">
-                        <p className="item-name">{translateMenuItemName(item.name)}</p>
+                        <p className="item-name">{displayMenuItemName(item)}</p>
                         {item.customizable && (
                           <span className="item-badge">{t('custom_badge')}</span>
                         )}

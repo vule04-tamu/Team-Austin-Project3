@@ -361,6 +361,15 @@ const catalogTranslations = {
       "Extra Ice": "Extra hielo",
       "Boba Pearls": "Perlas de boba",
       "Lychee Jelly": "Gelatina de lichi",
+      "Pudding": "Pudín",
+      "Chia Seeds": "Semillas de chía",
+      "Chia Seesm": "Semillas de chía",
+      "Aloe Jelly": "Gelatina de aloe",
+      "Mango Jelly": "Gelatina de mango",
+      "Crystal Boba": "Boba cristal",
+      "Chrystal Boba": "Boba cristal",
+      "Popping Boba": "Boba explosiva",
+      "Pipping Boba": "Boba explosiva",
     },
   },
   chinese: {
@@ -404,14 +413,39 @@ const catalogTranslations = {
       "Extra Ice": "多冰",
       "Boba Pearls": "波霸珍珠",
       "Lychee Jelly": "荔枝椰果",
+      "Pudding": "布丁",
+      "Chia Seeds": "奇亚籽",
+      "Chia Seesm": "奇亚籽",
+      "Aloe Jelly": "芦荟冻",
+      "Mango Jelly": "芒果冻",
+      "Crystal Boba": "水晶珍珠",
+      "Chrystal Boba": "水晶珍珠",
+      "Popping Boba": "爆爆珠",
+      "Pipping Boba": "爆爆珠",
     },
   },
 };
 
 const LARGE_SUFFIX = " (Large)";
 
+function normalizeCatalogKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
 function translateCatalogValue(language, bucket, value) {
-  return catalogTranslations[language]?.[bucket]?.[value] || value;
+  const bucketMap = catalogTranslations[language]?.[bucket];
+  if (!bucketMap || !value) return value;
+  if (bucketMap[value]) return bucketMap[value];
+
+  const normalizedValue = normalizeCatalogKey(value);
+  const match = Object.entries(bucketMap).find(
+    ([key]) => normalizeCatalogKey(key) === normalizedValue,
+  );
+
+  return match?.[1] || value;
 }
 
 function translateMenuItemNameForLanguage(language, t, name) {

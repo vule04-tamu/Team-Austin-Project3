@@ -1,12 +1,14 @@
 from decimal import Decimal
 from flask import Blueprint, request, jsonify
 from api.db import get_connection, get_cursor
+from api.services.translation import localize_entity_rows, normalize_language
 
 menu_bp = Blueprint("menu", __name__)
 
 
 @menu_bp.route("/customizations", methods=["GET"])
 def list_customizations():
+    language = normalize_language(request.args.get("lang"))
     sql = """
         SELECT id, category, name, price_modifier, inventory_item_id
         FROM customization_options
@@ -19,7 +21,7 @@ def list_customizations():
     except Exception:
         return jsonify([])
 
-    return jsonify([
+    rows = [
         {
             "id": row[0],
             "category": row[1],
@@ -28,11 +30,21 @@ def list_customizations():
             "inventoryItemId": row[4],
         }
         for row in rows
-    ])
+    ]
+
+    return jsonify(
+        localize_entity_rows(
+            rows,
+            entity_type="customization_option",
+            fields=("category", "name"),
+            language=language,
+        )
+    )
 
 
 @menu_bp.route("", methods=["GET"])
 def get_all():
+    language = normalize_language(request.args.get("lang"))
     try:
         with get_cursor() as cur:
             cur.execute(
@@ -64,7 +76,14 @@ def get_all():
             for row in rows
         ]
 
-    return jsonify(out)
+    return jsonify(
+        localize_entity_rows(
+            out,
+            entity_type="menu_item",
+            fields=("name",),
+            language=language,
+        )
+    )
 
 
 @menu_bp.route("/<int:item_id>/price", methods=["PUT"])

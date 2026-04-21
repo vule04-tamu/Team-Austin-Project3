@@ -70,6 +70,7 @@ function newLineId() {
 export default function CustomerView() {
     const navigate = useNavigate();
     const {
+        language,
         t,
         translateCustomizationCategory,
         translateCustomizationOption,
@@ -112,27 +113,37 @@ export default function CustomerView() {
     }, [contrastPct]);
 
     useEffect(() => {
+        let cancelled = false;
+
         (async () => {
             try {
+                setLoading(true);
+                setError(null);
+                const params = new URLSearchParams({ lang: language });
                 const [menuRes, optRes] = await Promise.all([
-                    fetch(`${API_BASE}/api/menu`),
-                    fetch(`${API_BASE}/api/menu/customizations`),
+                    fetch(`${API_BASE}/api/menu?${params.toString()}`),
+                    fetch(`${API_BASE}/api/menu/customizations?${params.toString()}`),
                 ]);
                 if (!menuRes.ok) throw new Error("Failed to load menu");
-                const data = await menuRes.json();
+                const [data, optionData] = await Promise.all([
+                    menuRes.json(),
+                    optRes.ok ? optRes.json() : Promise.resolve([]),
+                ]);
+                if (cancelled) return;
                 setMenuItems(data);
-                if (optRes.ok) {
-                    setCustomizationOptions(await optRes.json());
-                } else {
-                    setCustomizationOptions([]);
-                }
+                setCustomizationOptions(optionData);
             } catch (e) {
+                if (cancelled) return;
                 setError(e.message);
             } finally {
-                setLoading(false);
+                if (!cancelled) setLoading(false);
             }
         })();
-    }, []);
+
+        return () => {
+            cancelled = true;
+        };
+    }, [language]);
 
     const optionsByCategory = useMemo(() => {
         const m = new Map();
@@ -159,6 +170,78 @@ export default function CustomerView() {
         }
         return m;
     }, [menuItems]);
+
+    const displayMenuNameById = useMemo(() => {
+        const m = new Map();
+        for (const item of menuItems) {
+            m.set(
+                item.id,
+                item.displayName || translateMenuItemName(item.name),
+            );
+        }
+        return m;
+    }, [menuItems, translateMenuItemName]);
+
+    const displayMenuNameByName = useMemo(() => {
+        const m = new Map();
+        for (const item of menuItems) {
+            if (!m.has(item.name)) {
+                m.set(
+                    item.name,
+                    item.displayName || translateMenuItemName(item.name),
+                );
+            }
+        }
+        return m;
+    }, [menuItems, translateMenuItemName]);
+
+    const displayCustomizationNameById = useMemo(() => {
+        const m = new Map();
+        for (const option of customizationOptions) {
+            m.set(
+                option.id,
+                option.displayName || translateCustomizationOption(option.name),
+            );
+        }
+        return m;
+    }, [customizationOptions, translateCustomizationOption]);
+
+    const displayCustomizationCategoryByName = useMemo(() => {
+        const m = new Map();
+        for (const option of customizationOptions) {
+            if (!m.has(option.category)) {
+                m.set(
+                    option.category,
+                    option.displayCategory ||
+                        translateCustomizationCategory(option.category),
+                );
+            }
+        }
+        return m;
+    }, [customizationOptions, translateCustomizationCategory]);
+
+    const getDisplayMenuName = useCallback(
+        (item) =>
+            displayMenuNameById.get(item.id) ||
+            item.displayName ||
+            displayMenuNameByName.get(item.name) ||
+            translateMenuItemName(item.name),
+        [
+            displayMenuNameById,
+            displayMenuNameByName,
+            translateMenuItemName,
+        ],
+    );
+
+    const getDisplayCustomizationCategory = useCallback(
+        (category) =>
+            displayCustomizationCategoryByName.get(category) ||
+            translateCustomizationCategory(category),
+        [
+            displayCustomizationCategoryByName,
+            translateCustomizationCategory,
+        ],
+    );
 
     const showToast = useCallback((msg) => {
         setToast(msg);
@@ -205,8 +288,8 @@ export default function CustomerView() {
                 },
             ];
         });
-        showToast(t("added_item", { item: translateMenuItemName(item.name) }));
-    }, [showToast, t, translateMenuItemName]);
+        showToast(t("added_item", { item: getDisplayMenuName(item) }));
+    }, [getDisplayMenuName, showToast, t]);
 
     const onDrinkClick = (item) => {
         const variants = sizeMap.get(item.name);
@@ -281,11 +364,7 @@ export default function CustomerView() {
         const ids = line.customizationIds || [];
         if (!ids.length) return null;
         return ids
-            .map((id) =>
-                translateCustomizationOption(
-                    customizationOptions.find((o) => o.id === id)?.name,
-                ),
-            )
+            .map((id) => displayCustomizationNameById.get(id))
             .filter(Boolean)
             .join(", ");
     };
@@ -513,7 +592,7 @@ export default function CustomerView() {
                                             />
                                             <div className="kiosk-card-body">
                                                 <div className="kiosk-card-name">
-                                                    {translateMenuItemName(item.name)}
+                                                    {getDisplayMenuName(item)}
                                                 </div>
                                                 <div className="kiosk-card-footer">
                                                     <span className="kiosk-card-price">
@@ -573,7 +652,7 @@ export default function CustomerView() {
                                 <div key={item.lineId} className="kiosk-cart-item">
                                     <div className="kiosk-cart-item-dot" style={{ background: cardColor(item.id) }} />
                                     <div className="kiosk-cart-item-info">
-                                        <div className="kiosk-cart-item-name">{translateMenuItemName(item.name)}</div>
+                                        <div className="kiosk-cart-item-name">{getDisplayMenuName(item)}</div>
                                         {csum && (
                                             <div className="kiosk-cart-item-custom">{csum}</div>
                                         )}
@@ -630,7 +709,7 @@ export default function CustomerView() {
                 >
                     <div className="kiosk-modal kiosk-customize-modal">
                         <p className="kiosk-modal-title">
-                            {t('customize')} {translateMenuItemName(customizeModal.item.name)}
+                            {t('customize')} {getDisplayMenuName(customizeModal.item)}
                         </p>
                         <p className="kiosk-modal-label">
                             {customizeModal.variants
@@ -679,7 +758,7 @@ export default function CustomerView() {
                             {customizeModal.item.customizable && [...optionsByCategory.entries()].map(([cat, opts]) => (
                                 <div key={cat} className="kiosk-customize-block">
                                     <div className="kiosk-customize-cat">
-                                        {translateCustomizationCategory(cat)}
+                                        {getDisplayCustomizationCategory(cat)}
                                         {isExclusiveCategory(cat) && (
                                             <span className="kiosk-customize-cat-hint">
                                                 {t('one_only')}
@@ -697,7 +776,7 @@ export default function CustomerView() {
                                                 ? "radiogroup"
                                                 : undefined
                                         }
-                                        aria-label={translateCustomizationCategory(cat)}
+                                        aria-label={getDisplayCustomizationCategory(cat)}
                                     >
                                         {sortOptionsForDisplay(cat, opts).map((o) => (
                                             <button
@@ -718,7 +797,7 @@ export default function CustomerView() {
                                                     handleCustomizationClick(cat, o.id)
                                                 }
                                             >
-                                                {translateCustomizationOption(o.name)}
+                                                {displayCustomizationNameById.get(o.id) || o.displayName || translateCustomizationOption(o.name)}
                                                 {Number(o.priceModifier) > 0 && (
                                                     <span> +{fmt(o.priceModifier)}</span>
                                                 )}
