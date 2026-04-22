@@ -80,7 +80,7 @@ const translations = {
     // Categories
     sec_milk_teas: "Milk Teas",
     sec_fruit_teas: "Fruit, Green, & Oolong Teas",
-    sec_fruit_tab: "Fruit & Tea",
+    sec_fruit_tab: "Fruit Teas",
     sec_specialties: "Specialties & Other Drinks",
     sec_specialties_tab: "Specialties",
     sec_toppings: "Toppings / Add-ons",
@@ -182,7 +182,7 @@ const translations = {
     
     sec_milk_teas: "Tés de Leche",
     sec_fruit_teas: "Tés de Fruta, Verde y Oolong",
-    sec_fruit_tab: "Fruta y Té",
+    sec_fruit_tab: "Tés de Fruta",
     sec_specialties: "Especialidades y Otras Bebidas",
     sec_specialties_tab: "Especialidades",
     sec_toppings: "Toppings / Adiciones",
@@ -283,7 +283,7 @@ const translations = {
     
     sec_milk_teas: "奶茶",
     sec_fruit_teas: "果茶、绿茶和乌龙茶",
-    sec_fruit_tab: "果茶 & 茶",
+    sec_fruit_tab: "果茶",
     sec_specialties: "特色饮品及其他",
     sec_specialties_tab: "特色饮品",
     sec_toppings: "加料",
