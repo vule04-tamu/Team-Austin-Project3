@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
 import AccessibilityDrawer from "./AccessibilityDrawer.jsx";
 import "./KioskAccessibility.css";
@@ -68,7 +67,6 @@ function newLineId() {
 }
 
 export default function CustomerView() {
-    const navigate = useNavigate();
     const { language, t } = useLanguage();
 
     const [menuItems, setMenuItems] = useState([]);
@@ -493,7 +491,6 @@ export default function CustomerView() {
                     </div>
                 </div>
                 <div className="kiosk-header-right">
-                    <button type="button" className="kiosk-back-btn" onClick={() => navigate("/")}>{t('back')}</button>
                     <button
                         type="button"
                         className="kiosk-cart-btn"

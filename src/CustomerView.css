@@ -158,24 +158,6 @@
     100% { transform: scale(1); }
 }
 
-.kiosk-back-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: var(--pill-radius);
-    padding: 9px 18px;
-    font-family: "Nunito", sans-serif;
-    font-size: 13px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
-    cursor: pointer;
-    transition: all 0.18s;
-}
-
-.kiosk-back-btn:hover {
-    background: rgba(255, 255, 255, 0.18);
-    color: #fff;
-}
-
 /* Hero Banner */
 .kiosk-hero {
     position: relative;

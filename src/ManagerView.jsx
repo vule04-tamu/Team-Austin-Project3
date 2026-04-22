@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./ManagerView.css";
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -19,7 +18,6 @@ const fmtMoney = (n) => `$${Number(n || 0).toFixed(2)}`;
 const fmtInt = (n) => Number(n || 0).toLocaleString();
 
 export default function ManagerView() {
-    const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState("overview");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -539,9 +537,6 @@ export default function ManagerView() {
                             disabled={Boolean(actionBusy)}
                         >
                             Refresh
-                        </button>
-                        <button className="ghost-btn" type="button" onClick={() => navigate("/")}>
-                            Logout
                         </button>
                     </div>
                 </header>

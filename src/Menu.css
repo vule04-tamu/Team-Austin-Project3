@@ -25,30 +25,6 @@
     font-family: "Nunito", system-ui, sans-serif;
 }
 
-.menu-board-back {
-    position: absolute;
-    top: clamp(14px, 1.7vh, 20px);
-    right: clamp(18px, 2vw, 28px);
-    z-index: 3;
-    padding: 10px 16px;
-    border: 1px solid rgba(104, 72, 50, 0.18);
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.8);
-    color: var(--board-ink);
-    font-family: "Nunito", system-ui, sans-serif;
-    font-size: clamp(0.82rem, 1.4vmin, 1rem);
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    box-shadow: 0 10px 24px rgba(78, 48, 27, 0.08);
-    transition: transform 0.16s ease, background 0.16s ease;
-}
-
-.menu-board-back:hover {
-    background: rgba(255, 255, 255, 0.96);
-    transform: translateY(-1px);
-}
-
 .menu-board-header {
     display: grid;
     justify-items: center;

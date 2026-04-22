@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import {
     defaultCustomizationSelection,
     ensureIceSugarDefaults,
@@ -32,7 +31,6 @@ function newLineId() {
 }
 
 export default function CashierView() {
-    const navigate = useNavigate();
     const [menuItems, setMenuItems] = useState([]);
     const [customizationOptions, setCustomizationOptions] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -443,13 +441,6 @@ export default function CashierView() {
                             </button>
                         ))}
                     </div>
-                    <button
-                        type="button"
-                        className="toolbar-custom-label logout-btn"
-                        onClick={() => navigate("/")}
-                    >
-                        LOGOUT
-                    </button>
                 </div>
 
                 <div className="menu-grid-area">

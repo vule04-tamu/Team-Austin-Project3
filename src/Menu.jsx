@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
 import { useLanguage } from "./LanguageSwitch";
 import "./Menu.css";
 
@@ -33,7 +32,6 @@ const SECTIONS = [
 ];
 
 export default function Menu() {
-  const navigate = useNavigate();
   const { language, t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,13 +95,6 @@ export default function Menu() {
   if (loading) {
     return (
       <div className="menu-wrap menu-board">
-        <button
-          type="button"
-          className="menu-board-back"
-          onClick={() => navigate("/")}
-        >
-          {t("back")}
-        </button>
         <p className="menu-status">{t('loading_menu')}</p>
       </div>
     );
@@ -111,13 +102,6 @@ export default function Menu() {
   if (error) {
     return (
       <div className="menu-wrap menu-board">
-        <button
-          type="button"
-          className="menu-board-back"
-          onClick={() => navigate("/")}
-        >
-          {t("back")}
-        </button>
         <p className="menu-status menu-error">Error: {error}</p>
       </div>
     );
@@ -125,13 +109,6 @@ export default function Menu() {
 
   return (
     <div className="menu-wrap menu-board">
-      <button
-        type="button"
-        className="menu-board-back"
-        onClick={() => navigate("/")}
-        >
-          {t("back")}
-        </button>
       <header className="menu-board-header">
         <h1 className="shop-name">{t('shop_name')}</h1>
         <div className="divider">
