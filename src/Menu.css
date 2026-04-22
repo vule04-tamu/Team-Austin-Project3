@@ -79,7 +79,7 @@
 .menu-board-main {
     min-height: 0;
     display: grid;
-    grid-template-columns: 1.45fr 1.08fr 0.88fr;
+    grid-template-columns: 1.45fr 0.82fr 1.12fr;
     grid-template-rows: 1fr 1fr;
     grid-template-areas:
         "milk fruit specialties"
@@ -155,10 +155,14 @@
     column-gap: 10px;
 }
 
-.section-sec_fruit_teas .menu-board-items,
+.section-sec_fruit_teas .menu-board-items {
+    grid-template-columns: 1fr;
+}
+
 .section-sec_specialties .menu-board-items,
 .section-sec_toppings .menu-board-items {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 10px;
 }
 
 .menu-board-item {
