@@ -34,6 +34,7 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
 
             <div
                 className={`kiosk-a11y-dock-shell ${open ? "is-open" : ""}`}
+                data-text-scale-ignore="true"
                 data-screen-magnifier-ignore="true"
             >
                 <div className="kiosk-a11y-dock">

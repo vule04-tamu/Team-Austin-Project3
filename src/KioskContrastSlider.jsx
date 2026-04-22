@@ -6,6 +6,9 @@ import { useLanguage } from "./LanguageSwitch";
  */
 export default function KioskContrastSlider({ value, onChange, id = "kiosk-contrast-range" }) {
     const { t } = useLanguage();
+    const min = 50;
+    const max = 200;
+    const fillPct = Math.min(100, Math.max(0, ((value - min) / (max - min)) * 100));
 
     return (
         <div className="kiosk-a11y-contrast">
@@ -16,10 +19,11 @@ export default function KioskContrastSlider({ value, onChange, id = "kiosk-contr
                 id={id}
                 className="kiosk-a11y-range"
                 type="range"
-                min={50}
-                max={200}
+                min={min}
+                max={max}
                 step={5}
                 value={value}
+                style={{ "--kiosk-a11y-range-fill": `${fillPct}%` }}
                 onChange={(e) => onChange(Number(e.target.value))}
             />
             <span className="kiosk-a11y-value" aria-live="polite">

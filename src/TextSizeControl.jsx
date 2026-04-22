@@ -5,6 +5,7 @@ import {
     useEffect,
     useCallback,
     useMemo,
+    useRef,
 } from "react";
 import { useLanguage } from "./LanguageSwitch";
 import "./TextSizeControl.css";
@@ -15,15 +16,40 @@ const TEXT_SIZE_SCALES = {
     large: 1.15,
     xlarge: 1.3,
 };
+const TEXT_SIZE_STORAGE_KEY = "textSizeScale";
+const TEXT_SCALE_IGNORE_ATTR = "data-text-scale-ignore";
 
 const TextSizeContext = createContext(null);
 
-const scaleElement = (el, scale) => {
-    const computedStyle = window.getComputedStyle(el);
-    const currentFontSize = computedStyle.fontSize;
+const shouldIgnoreElement = (el) =>
+    Boolean(el.closest(`[${TEXT_SCALE_IGNORE_ATTR}="true"]`));
 
-    if (!el.hasAttribute("data-original-font-size")) {
-        el.setAttribute("data-original-font-size", currentFontSize);
+const primeOriginalFontSize = (el, currentScale) => {
+    if (el.hasAttribute("data-original-font-size") || shouldIgnoreElement(el)) {
+        return;
+    }
+
+    const computedStyle = window.getComputedStyle(el);
+    const currentFontSize = parseFloat(computedStyle.fontSize);
+    if (Number.isNaN(currentFontSize)) {
+        return;
+    }
+
+    const normalizedScale =
+        typeof currentScale === "number" && currentScale > 0 ? currentScale : 1;
+    const baseSizeValue = currentFontSize / normalizedScale;
+    el.setAttribute("data-original-font-size", `${baseSizeValue}`);
+};
+
+const scaleElement = (el, scale) => {
+    if (shouldIgnoreElement(el)) {
+        return;
+    }
+
+    if (scale === 1) {
+        el.style.removeProperty("font-size");
+        el.removeAttribute("data-original-font-size");
+        return;
     }
 
     const originalSize = el.getAttribute("data-original-font-size");
@@ -34,36 +60,55 @@ const scaleElement = (el, scale) => {
     }
 };
 
-const scaleAllElements = (scale) => {
-    document.querySelectorAll("*").forEach((el) => {
+const getElementBatch = (root) => [root, ...root.querySelectorAll("*")];
+
+const scaleAllElements = (scale, currentScale) => {
+    const body = document.body;
+    if (!body) {
+        return;
+    }
+
+    const elements = getElementBatch(body);
+    if (scale !== 1) {
+        elements.forEach((el) => {
+            primeOriginalFontSize(el, currentScale);
+        });
+    }
+    elements.forEach((el) => {
         scaleElement(el, scale);
     });
 };
 
 export function TextSizeProvider({ children }) {
     const [scale, setScaleKey] = useState("normal");
+    const appliedScaleRef = useRef(TEXT_SIZE_SCALES.normal);
 
     useEffect(() => {
-        const raw = localStorage.getItem("textSizeScale") || "normal";
+        const raw = localStorage.getItem(TEXT_SIZE_STORAGE_KEY) || "normal";
         const saved =
             TEXT_SIZE_SCALES[raw] != null ? raw : "normal";
         setScaleKey(saved);
         const scaleValue = TEXT_SIZE_SCALES[saved];
         document.documentElement.style.setProperty("--font-scale", scaleValue);
-        scaleAllElements(scaleValue);
+        scaleAllElements(scaleValue, appliedScaleRef.current);
+        appliedScaleRef.current = scaleValue;
 
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 if (mutation.addedNodes.length) {
-                    const currentScaleValue =
-                        TEXT_SIZE_SCALES[
-                            localStorage.getItem("textSizeScale") || "normal"
-                        ];
                     mutation.addedNodes.forEach((node) => {
                         if (node.nodeType === 1) {
-                            scaleElement(node, currentScaleValue);
-                            node.querySelectorAll("*").forEach((child) => {
-                                scaleElement(child, currentScaleValue);
+                            const elements = getElementBatch(node);
+                            if (appliedScaleRef.current !== 1) {
+                                elements.forEach((el) => {
+                                    primeOriginalFontSize(
+                                        el,
+                                        appliedScaleRef.current,
+                                    );
+                                });
+                            }
+                            elements.forEach((el) => {
+                                scaleElement(el, appliedScaleRef.current);
                             });
                         }
                     });
@@ -81,9 +126,11 @@ export function TextSizeProvider({ children }) {
 
     const applyScale = useCallback((scaleKey) => {
         const scaleValue = TEXT_SIZE_SCALES[scaleKey];
+        const previousScale = appliedScaleRef.current;
         document.documentElement.style.setProperty("--font-scale", scaleValue);
-        scaleAllElements(scaleValue);
-        localStorage.setItem("textSizeScale", scaleKey);
+        scaleAllElements(scaleValue, previousScale);
+        appliedScaleRef.current = scaleValue;
+        localStorage.setItem(TEXT_SIZE_STORAGE_KEY, scaleKey);
     }, []);
 
     const setScale = useCallback(
