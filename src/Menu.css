@@ -1,6 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;700;800;900&display=swap");
 
-/* Full-screen menu board: no page scroll, all sections visible at once. */
+/* Full-screen menu board with scrollable sections so added items do not get clipped. */
 .menu-wrap.menu-board {
     --board-ink: #2b1d17;
     --board-muted: #7f6554;
@@ -127,7 +127,27 @@
     display: grid;
     gap: clamp(7px, 0.75vh, 10px);
     align-content: start;
-    overflow: hidden;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(138, 90, 55, 0.45) transparent;
+}
+
+.menu-board-items::-webkit-scrollbar {
+    width: 7px;
+}
+
+.menu-board-items::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.menu-board-items::-webkit-scrollbar-thumb {
+    background: rgba(138, 90, 55, 0.32);
+    border-radius: 999px;
+}
+
+.menu-board-items::-webkit-scrollbar-thumb:hover {
+    background: rgba(138, 90, 55, 0.5);
 }
 
 .section-sec_milk_teas .menu-board-items {
@@ -237,6 +257,11 @@
     }
 
     .menu-board-main {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto auto;
+        grid-template-areas:
+            "milk fruit"
+            "specialties toppings";
         gap: 10px;
     }
 
@@ -248,5 +273,38 @@
     .menu-board-item {
         gap: 5px;
         padding: 7px 0 8px;
+    }
+}
+
+@media (max-width: 780px) {
+    .menu-wrap.menu-board {
+        height: auto;
+        min-height: 100dvh;
+        overflow-y: auto;
+        grid-template-rows: auto auto auto;
+    }
+
+    .menu-board-main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        grid-template-areas:
+            "milk"
+            "fruit"
+            "specialties"
+            "toppings";
+        overflow: visible;
+    }
+
+    .menu-board-col {
+        max-height: none;
+    }
+
+    .menu-board-items {
+        overflow: visible;
+        padding-right: 0;
+    }
+
+    .section-sec_milk_teas .menu-board-items {
+        grid-template-columns: 1fr;
     }
 }
