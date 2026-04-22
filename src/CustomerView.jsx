@@ -11,6 +11,7 @@ import {
     sortOptionsForDisplay,
 } from "./customizationUtils";
 import "./CustomerView.css";
+import Chatbot from './Chatbot'
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
 
@@ -485,6 +486,7 @@ export default function CustomerView() {
 
     return (
         <div className="kiosk-root">
+            <Chatbot />
             <header className="kiosk-header">
                 <div className="kiosk-brand">
                     <div>
