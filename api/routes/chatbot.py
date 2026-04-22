@@ -38,7 +38,7 @@ def get_gemini_response(user_message, conversation_history):
             return "Sorry, I'm not configured yet. Please set up the Gemini API key."
         
         # FIX: Ensure you are using a valid, standard model name
-        model = genai.GenerativeModel('gemini-3-flash-preview')
+        model = genai.GenerativeModel('gemini-2.5-flash-lite')
         
         # Prepare conversation history for context
         messages = []
