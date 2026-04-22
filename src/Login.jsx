@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useLanguage } from './LanguageSwitch'
 import AccessibilityDrawer from './AccessibilityDrawer'
+import Chatbot from './Chatbot'
 import './KioskAccessibility.css'
 import './App.css'
 
@@ -107,6 +108,7 @@ function Login() {
 
   return (
     <div className="login-page">
+      <Chatbot />
       <AccessibilityDrawer
         contrastPct={contrastPct}
         onContrastChange={setContrastPct}

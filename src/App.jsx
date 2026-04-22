@@ -71,7 +71,9 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
-      <AppRoutes />
+      <div>
+        <AppRoutes />
+      </div>
     </Router>
   )
 }
