@@ -69,13 +69,7 @@ function newLineId() {
 
 export default function CustomerView() {
     const navigate = useNavigate();
-    const {
-        language,
-        t,
-        translateCustomizationCategory,
-        translateCustomizationOption,
-        translateMenuItemName,
-    } = useLanguage();
+    const { language, t } = useLanguage();
 
     const [menuItems, setMenuItems] = useState([]);
     const [customizationOptions, setCustomizationOptions] = useState([]);
@@ -174,72 +168,57 @@ export default function CustomerView() {
     const displayMenuNameById = useMemo(() => {
         const m = new Map();
         for (const item of menuItems) {
-            m.set(
-                item.id,
-                item.displayName || translateMenuItemName(item.name),
-            );
+            m.set(item.id, item.displayName || item.name);
         }
         return m;
-    }, [menuItems, translateMenuItemName]);
+    }, [menuItems]);
 
     const displayMenuNameByName = useMemo(() => {
         const m = new Map();
         for (const item of menuItems) {
             if (!m.has(item.name)) {
-                m.set(
-                    item.name,
-                    item.displayName || translateMenuItemName(item.name),
-                );
+                m.set(item.name, item.displayName || item.name);
             }
         }
         return m;
-    }, [menuItems, translateMenuItemName]);
+    }, [menuItems]);
 
     const displayCustomizationNameById = useMemo(() => {
         const m = new Map();
         for (const option of customizationOptions) {
-            m.set(
-                option.id,
-                option.displayName || translateCustomizationOption(option.name),
-            );
+            m.set(option.id, option.displayName || option.name);
         }
         return m;
-    }, [customizationOptions, translateCustomizationOption]);
+    }, [customizationOptions]);
 
     const displayCustomizationCategoryByName = useMemo(() => {
         const m = new Map();
         for (const option of customizationOptions) {
             if (!m.has(option.category)) {
-                m.set(
-                    option.category,
-                    option.displayCategory ||
-                        translateCustomizationCategory(option.category),
-                );
+                m.set(option.category, option.displayCategory || option.category);
             }
         }
         return m;
-    }, [customizationOptions, translateCustomizationCategory]);
+    }, [customizationOptions]);
 
     const getDisplayMenuName = useCallback(
         (item) =>
             displayMenuNameById.get(item.id) ||
             item.displayName ||
             displayMenuNameByName.get(item.name) ||
-            translateMenuItemName(item.name),
+            item.name,
         [
             displayMenuNameById,
             displayMenuNameByName,
-            translateMenuItemName,
         ],
     );
 
     const getDisplayCustomizationCategory = useCallback(
         (category) =>
             displayCustomizationCategoryByName.get(category) ||
-            translateCustomizationCategory(category),
+            category,
         [
             displayCustomizationCategoryByName,
-            translateCustomizationCategory,
         ],
     );
 
@@ -797,7 +776,7 @@ export default function CustomerView() {
                                                     handleCustomizationClick(cat, o.id)
                                                 }
                                             >
-                                                {displayCustomizationNameById.get(o.id) || o.displayName || translateCustomizationOption(o.name)}
+                                                {displayCustomizationNameById.get(o.id) || o.displayName || o.name}
                                                 {Number(o.priceModifier) > 0 && (
                                                     <span> +{fmt(o.priceModifier)}</span>
                                                 )}

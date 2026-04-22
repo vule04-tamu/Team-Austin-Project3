@@ -34,7 +34,7 @@ const SECTIONS = [
 
 export default function Menu() {
   const navigate = useNavigate();
-  const { language, t, translateMenuItemName } = useLanguage();
+  const { language, t } = useLanguage();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -92,8 +92,7 @@ export default function Menu() {
 
   const fmt = (n) => `$${n.toFixed(2)}`;
   const sectionClassName = (labelKey) => `menu-board-col section-${labelKey}`;
-  const displayMenuItemName = (item) =>
-    item.displayName || translateMenuItemName(item.name);
+  const displayMenuItemName = (item) => item.displayName || item.name;
 
   if (loading) {
     return (

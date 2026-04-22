@@ -43,35 +43,6 @@ GOOGLE_GTX_URL = os.environ.get(
 LIBRETRANSLATE_URL = os.environ.get("LIBRETRANSLATE_URL", "").strip()
 LIBRETRANSLATE_API_KEY = os.environ.get("LIBRETRANSLATE_API_KEY", "").strip()
 
-GLOSSARY = {
-    "spanish": {
-        "Ice Level": "Nivel de hielo",
-        "Sugar Level": "Nivel de azúcar",
-        "Toppings": "Toppings",
-        "Other": "Otro",
-        "Boba Pearls": "Perlas de boba",
-        "Lychee Jelly": "Gelatina de lichi",
-        "Popping Boba": "Boba explosiva",
-        "Pipping Boba": "Boba explosiva",
-        "Crystal Boba": "Boba cristal",
-        "Chrystal Boba": "Boba cristal",
-        "Boba": "boba",
-    },
-    "chinese": {
-        "Ice Level": "冰块",
-        "Sugar Level": "糖度",
-        "Toppings": "加料",
-        "Other": "其他",
-        "Boba Pearls": "波霸珍珠",
-        "Lychee Jelly": "荔枝椰果",
-        "Popping Boba": "爆爆珠",
-        "Pipping Boba": "爆爆珠",
-        "Crystal Boba": "水晶珍珠",
-        "Chrystal Boba": "水晶珍珠",
-        "Boba": "波霸",
-    },
-}
-
 _CACHE_TABLE_READY = False
 _CACHE_TABLE_LOCK = threading.Lock()
 
@@ -145,15 +116,7 @@ def _display_field_name(field):
     return f"display{field[:1].upper()}{field[1:]}"
 
 
-def _normalize_text(value):
-    return " ".join(str(value or "").strip().lower().split())
-
-
 def _translate_text(text, language):
-    glossary_match = _lookup_glossary(text, language)
-    if glossary_match:
-        return glossary_match, "glossary"
-
     if TRANSLATION_PROVIDER == "none":
         return text, None
 
@@ -171,15 +134,6 @@ def _translate_text(text, language):
     except Exception as exc:
         logger.warning("translation lookup failed for %r: %s", text, exc)
         return text, None
-
-
-def _lookup_glossary(text, language):
-    glossary = GLOSSARY.get(language, {})
-    normalized = _normalize_text(text)
-    for key, value in glossary.items():
-        if _normalize_text(key) == normalized:
-            return value
-    return None
 
 
 def _translate_via_google_gtx(text, language):
