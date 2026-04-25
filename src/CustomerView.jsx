@@ -238,6 +238,56 @@ export default function CustomerView() {
         [customizationOptions],
     );
 
+    const handleSurpriseMe = useCallback(() => {
+    // Only pick from drink sections, never from toppings
+    const drinkSectionKeys = ["milk-teas", "fruit-teas", "specialties"];
+    const drinkItems = menuItems.filter((item) =>
+        SECTIONS.some(
+            (s) => drinkSectionKeys.includes(s.key) && s.names.includes(item.name)
+        )
+    );
+    if (!drinkItems.length) {
+        showToast("No drinks available right now!");
+        return;
+    }
+
+    // Pick a random base drink (prefer regular-sized entries)
+    const baseItems = drinkItems.filter((item) => !item.name.endsWith(" (Large)"));
+    const pool = baseItems.length ? baseItems : drinkItems;
+    const item = pool[Math.floor(Math.random() * pool.length)];
+
+    // Randomly pick regular or large if a large variant exists
+    const variants = sizeMap.get(item.name);
+    const useSize = variants?.large && Math.random() > 0.5 ? "large" : "regular";
+    const actualItem =
+        useSize === "large" && variants?.large ? variants.large : item;
+
+    // Build random customizations
+    let customIds = [];
+    if (item.customizable && customizationOptions.length) {
+        for (const [cat, opts] of optionsByCategory.entries()) {
+            if (isExclusiveCategory(cat)) {
+                // Pick exactly one at random
+                const pick = opts[Math.floor(Math.random() * opts.length)];
+                customIds.push(pick.id);
+            } else {
+                // Pick a random subset (0 to all)
+                const shuffled = [...opts].sort(() => Math.random() - 0.5);
+                const count = Math.floor(Math.random() * (shuffled.length + 1));
+                customIds.push(...shuffled.slice(0, count).map((o) => o.id));
+            }
+        }
+        customIds = ensureIceSugarDefaults(customIds, customizationOptions);
+    }
+
+    pushLine(actualItem, customIds);
+    showToast(`Surprise! ${getDisplayMenuName(actualItem)} added!`);
+    }, [
+        menuItems, sizeMap, customizationOptions, optionsByCategory,
+        isExclusiveCategory, ensureIceSugarDefaults,
+        pushLine, getDisplayMenuName, showToast,
+    ]);
+
     const pushLine = useCallback((item, customizationIds) => {
         setCart((prev) => {
             const hasMods = (customizationIds || []).length > 0;
@@ -613,11 +663,22 @@ export default function CustomerView() {
                 <aside className="kiosk-cart">
                     <div className="kiosk-cart-header">
                         <h2 className="kiosk-cart-title">{t('your_order')}</h2>
-                        {totalItems > 0 && (
-                            <span className="kiosk-cart-count">{totalItems} {totalItems !== 1 ? t('items') : t('item')}</span>
-                        )}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                            <button
+                                type="button"
+                                className="kiosk-surprise-btn"
+                                onClick={handleSurpriseMe}
+                                title="Add a random drink to your order"
+                            >
+                                {t('surprise_me') || 'Surprise Me!'}
+                            </button>
+                            {totalItems > 0 && (
+                                <span className="kiosk-cart-count">
+                                    {totalItems} {totalItems !== 1 ? t('items') : t('item')}
+                                </span>
+                            )}
+                        </div>
                     </div>
-
                     <div className="kiosk-cart-items">
                         {cart.length === 0 ? (
                             <div className="kiosk-cart-empty">
