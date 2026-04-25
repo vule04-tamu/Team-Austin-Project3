@@ -665,7 +665,7 @@ export default function CustomerView() {
                                 onClick={handleSurpriseMe}
                                 title="Add a random drink to your order"
                             >
-                                🎲 {t('surprise_me') || 'Surprise Me!'}
+                                {t('Surprise Me!') || 'Surprise Me!'}
                             </button>
                             {totalItems > 0 && (
                                 <span className="kiosk-cart-count">
