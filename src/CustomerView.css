@@ -300,13 +300,10 @@
     font-weight: 700;
     margin: 0;
     line-height: 1.1;
-    /* gradient text */
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    /* subtle glow effect via text-shadow is not possible with clip,
-       so we add a letter-spacing for style */
     letter-spacing: 0.5px;
 }
 
@@ -1197,7 +1194,7 @@
     flex-direction: column;
 }
 
-/* Surprise Me button */
+/* ── Surprise Me button ── */
 .kiosk-surprise-btn {
     background: linear-gradient(135deg, var(--boba-yellow), var(--boba-orange));
     border: none;

@@ -238,57 +238,8 @@ export default function CustomerView() {
         [customizationOptions],
     );
 
-    const handleSurpriseMe = useCallback(() => {
-    // Only pick from drink sections, never from toppings
-    const drinkSectionKeys = ["milk-teas", "fruit-teas", "specialties"];
-    const drinkItems = menuItems.filter((item) =>
-        SECTIONS.some(
-            (s) => drinkSectionKeys.includes(s.key) && s.names.includes(item.name)
-        )
-    );
-    if (!drinkItems.length) {
-        showToast("No drinks available right now!");
-        return;
-    }
-
-    // Pick a random base drink (prefer regular-sized entries)
-    const baseItems = drinkItems.filter((item) => !item.name.endsWith(" (Large)"));
-    const pool = baseItems.length ? baseItems : drinkItems;
-    const item = pool[Math.floor(Math.random() * pool.length)];
-
-    // Randomly pick regular or large if a large variant exists
-    const variants = sizeMap.get(item.name);
-    const useSize = variants?.large && Math.random() > 0.5 ? "large" : "regular";
-    const actualItem =
-        useSize === "large" && variants?.large ? variants.large : item;
-
-    // Build random customizations
-    let customIds = [];
-    if (item.customizable && customizationOptions.length) {
-        for (const [cat, opts] of optionsByCategory.entries()) {
-            if (isExclusiveCategory(cat)) {
-                // Pick exactly one at random
-                const pick = opts[Math.floor(Math.random() * opts.length)];
-                customIds.push(pick.id);
-            } else {
-                // Pick a random subset (0 to all)
-                const shuffled = [...opts].sort(() => Math.random() - 0.5);
-                const count = Math.floor(Math.random() * (shuffled.length + 1));
-                customIds.push(...shuffled.slice(0, count).map((o) => o.id));
-            }
-        }
-        customIds = ensureIceSugarDefaults(customIds, customizationOptions);
-    }
-
-    pushLine(actualItem, customIds);
-    showToast(`Surprise! ${getDisplayMenuName(actualItem)} added!`);
-    }, [
-        menuItems, sizeMap, customizationOptions, optionsByCategory,
-        isExclusiveCategory, ensureIceSugarDefaults,
-        pushLine, getDisplayMenuName, showToast,
-    ]);
-
-    const pushLine = useCallback((item, customizationIds) => {
+    // pushLine must be defined BEFORE handleSurpriseMe so the reference is available
+    const pushLine = useCallback((item, customizationIds, silent = false) => {
         setCart((prev) => {
             const hasMods = (customizationIds || []).length > 0;
             const customizable = Boolean(item.customizable);
@@ -316,8 +267,52 @@ export default function CustomerView() {
                 },
             ];
         });
-        showToast(t("added_item", { item: getDisplayMenuName(item) }));
+        if (!silent) showToast(t("added_item", { item: getDisplayMenuName(item) }));
     }, [getDisplayMenuName, showToast, t]);
+
+    const handleSurpriseMe = useCallback(() => {
+        const drinkSectionKeys = ["milk-teas", "fruit-teas", "specialties"];
+        const drinkItems = menuItems.filter((item) =>
+            SECTIONS.some(
+                (s) => drinkSectionKeys.includes(s.key) && s.names.includes(item.name)
+            )
+        );
+        if (!drinkItems.length) {
+            showToast("😢 No drinks available right now!");
+            return;
+        }
+
+        const baseItems = drinkItems.filter((item) => !item.name.endsWith(" (Large)"));
+        const pool = baseItems.length ? baseItems : drinkItems;
+        const item = pool[Math.floor(Math.random() * pool.length)];
+
+        const variants = sizeMap.get(item.name);
+        const useSize = variants?.large && Math.random() > 0.5 ? "large" : "regular";
+        const actualItem =
+            useSize === "large" && variants?.large ? variants.large : item;
+
+        let customIds = [];
+        if (item.customizable && customizationOptions.length) {
+            for (const [cat, opts] of optionsByCategory.entries()) {
+                if (isExclusiveCategory(cat)) {
+                    const pick = opts[Math.floor(Math.random() * opts.length)];
+                    customIds.push(pick.id);
+                } else {
+                    const shuffled = [...opts].sort(() => Math.random() - 0.5);
+                    const count = Math.floor(Math.random() * (shuffled.length + 1));
+                    customIds.push(...shuffled.slice(0, count).map((o) => o.id));
+                }
+            }
+            customIds = ensureIceSugarDefaults(customIds, customizationOptions);
+        }
+
+        // silent=true so pushLine doesn't fire a second toast
+        pushLine(actualItem, customIds, true);
+        showToast(`🎲 Surprise! ${getDisplayMenuName(actualItem)} added!`);
+    }, [
+        menuItems, sizeMap, customizationOptions, optionsByCategory,
+        pushLine, getDisplayMenuName, showToast,
+    ]);
 
     const onDrinkClick = (item) => {
         const variants = sizeMap.get(item.name);
@@ -670,7 +665,7 @@ export default function CustomerView() {
                                 onClick={handleSurpriseMe}
                                 title="Add a random drink to your order"
                             >
-                                {t('surprise_me') || 'Surprise Me!'}
+                                🎲 {t('surprise_me') || 'Surprise Me!'}
                             </button>
                             {totalItems > 0 && (
                                 <span className="kiosk-cart-count">
@@ -679,6 +674,7 @@ export default function CustomerView() {
                             )}
                         </div>
                     </div>
+
                     <div className="kiosk-cart-items">
                         {cart.length === 0 ? (
                             <div className="kiosk-cart-empty">
