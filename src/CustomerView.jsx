@@ -56,13 +56,6 @@ const SECTIONS = [
         gradient: "#ffd166, #ff9f1c",
         names: ["Matcha Latte", "jayden special", "Fresh Milk"],
     },
-    {
-        key: "toppings",
-        labelKey: "sec_toppings",
-        tabKey: "sec_toppings_tab",
-        gradient: "#ff9f1c, #ef233c",
-        names: ["Boba Pearls", "Lychee Jelly"],
-    },
 ];
 
 function newLineId() {
@@ -435,6 +428,7 @@ export default function CustomerView() {
                 // Exclude non-drink items like "No Ice", "No Sugar", etc.
                 if (item.name.toLowerCase().includes('ice')) return false;
                 if (item.name.toLowerCase().includes('sugar')) return false;
+                if (item.name.toLowerCase().includes('boba') || item.name.toLowerCase().includes('jelly')) return false;
 
                 if (item.name.endsWith(LARGE) && baseNames.has(item.name.slice(0, -LARGE.length))) {
                     return false;
