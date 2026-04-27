@@ -1,7 +1,7 @@
 import os
 import jwt
 import time
-from flask import Blueprint, request, jsonify, redirect, session
+from flask import Blueprint, request, jsonify, redirect
 from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
@@ -24,7 +24,7 @@ ALLOWED_MANAGER_EMAILS = {
 
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
 
-def make_flow():
+def make_flow(state=None):
     return Flow.from_client_config(
         {
             "web": {
