@@ -95,13 +95,14 @@ export default function BobaCupAnimation({
     return { count: 5, minSize: 14, maxSize: 20 };
   }, [iceLevel]);
 
-  /* deterministic ice positions — spread across more of the cup */
+  /* deterministic ice positions — clustered at the liquid surface */
   const iceChunks = useMemo(() => {
     const chunks = [];
+    // Y values are all near the surface (95–118) so ice visibly floats on top
     const positions = [
-      { x: 108, y: 82 }, { x: 162, y: 88 }, { x: 130, y: 68 },
-      { x: 150, y: 112 }, { x: 118, y: 108 }, { x: 170, y: 70 },
-      { x: 140, y: 95 }, { x: 100, y: 70 }, { x: 165, y: 120 },
+      { x: 110, y: 100 }, { x: 158, y: 97  }, { x: 134, y: 93  },
+      { x: 120, y: 113 }, { x: 155, y: 112 }, { x: 100, y: 105 },
+      { x: 145, y: 108 }, { x: 168, y: 104 }, { x: 125, y: 95  },
     ];
     for (let i = 0; i < iceConfig.count; i++) {
       const p = positions[i % positions.length];
@@ -314,27 +315,31 @@ export default function BobaCupAnimation({
               {renderToppings()}
             </g>
 
-            {/* Ice chunks */}
+            {/* Ice chunks — rendered AFTER foam so they float visibly on the surface */}
             {iceChunks.map((chunk, i) => (
               <g
                 key={i}
                 transform={`translate(${chunk.x}, ${chunk.y}) rotate(${chunk.rot})`}
-                className="cup-fill-anim"
               >
                 <rect
                   x={-chunk.size / 2} y={-chunk.size / 2}
                   width={chunk.size} height={chunk.size}
                   rx={4}
                   fill="url(#iceGrad)"
-                  stroke="rgba(200,235,255,0.6)"
-                  strokeWidth="1"
+                  stroke="rgba(200,235,255,0.8)"
+                  strokeWidth="1.5"
                   style={{ transition: "all 0.35s ease" }}
                 />
-                {/* Ice shine */}
+                {/* Ice shine — horizontal + vertical streak */}
                 <line
                   x1={-chunk.size / 2 + 2} y1={-chunk.size / 2 + 2}
-                  x2={-chunk.size / 2 + chunk.size * 0.4} y2={-chunk.size / 2 + 2}
-                  stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round"
+                  x2={-chunk.size / 2 + chunk.size * 0.45} y2={-chunk.size / 2 + 2}
+                  stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round"
+                />
+                <line
+                  x1={-chunk.size / 2 + 2} y1={-chunk.size / 2 + 2}
+                  x2={-chunk.size / 2 + 2} y2={-chunk.size / 2 + chunk.size * 0.35}
+                  stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round"
                 />
               </g>
             ))}
