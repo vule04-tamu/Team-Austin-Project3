@@ -59,7 +59,11 @@ export default function CashierView() {
                 ]);
                 if (!menuRes.ok) throw new Error("Failed to load menu");
                 const data = await menuRes.json();
-                setMenuItems(data);
+                const filteredMenuItems = data.filter((item) => {
+                    const nameLower = item.name.toLowerCase();
+                    return !nameLower.includes("ice") && !nameLower.includes("sugar") && !nameLower.includes("boba") && !nameLower.includes("jelly");
+                });
+                setMenuItems(filteredMenuItems);
 
                 if (optRes.ok) {
                     const opts = await optRes.json();
@@ -69,7 +73,7 @@ export default function CashierView() {
                 }
 
                 const cats = [
-                    ...new Set(data.map((i) => i.category || "All Items")),
+                    ...new Set(filteredMenuItems.map((i) => i.category || "All Items")),
                 ];
                 setCategories(cats);
                 setActiveCategory(cats[0] ?? null);
