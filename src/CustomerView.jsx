@@ -10,6 +10,8 @@ import {
     sortOptionsForDisplay,
 } from "./customizationUtils";
 import "./CustomerView.css";
+import "./BobaCupAnimation.css";
+import BobaCupAnimation from "./BobaCupAnimation";
 import Chatbot from './Chatbot'
 
 const API_BASE = import.meta.env.VITE_API_URL || "";
@@ -206,19 +208,13 @@ export default function CustomerView() {
             item.displayName ||
             displayMenuNameByName.get(item.name) ||
             item.name,
-        [
-            displayMenuNameById,
-            displayMenuNameByName,
-        ],
+        [displayMenuNameById, displayMenuNameByName],
     );
 
     const getDisplayCustomizationCategory = useCallback(
         (category) =>
-            displayCustomizationCategoryByName.get(category) ||
-            category,
-        [
-            displayCustomizationCategoryByName,
-        ],
+            displayCustomizationCategoryByName.get(category) || category,
+        [displayCustomizationCategoryByName],
     );
 
     const showToast = useCallback((msg) => {
@@ -238,7 +234,6 @@ export default function CustomerView() {
         [customizationOptions],
     );
 
-    // pushLine must be defined BEFORE handleSurpriseMe so the reference is available
     const pushLine = useCallback((item, customizationIds, silent = false) => {
         setCart((prev) => {
             const hasMods = (customizationIds || []).length > 0;
@@ -306,7 +301,6 @@ export default function CustomerView() {
             customIds = ensureIceSugarDefaults(customIds, customizationOptions);
         }
 
-        // silent=true so pushLine doesn't fire a second toast
         pushLine(actualItem, customIds, true);
         showToast(`🎲 Surprise! ${getDisplayMenuName(actualItem)} added!`);
     }, [
@@ -447,6 +441,33 @@ export default function CustomerView() {
 
     const contrastStyle = { filter: `contrast(${contrastPct}%)` };
 
+    // ── Derive cup animation props from current customizeModal state ──
+    const cupSectionKey = useMemo(() => {
+        if (!customizeModal) return "milk-teas";
+        const sec = SECTIONS.find((s) => s.names.includes(customizeModal.item.name));
+        return sec ? sec.key : "milk-teas";
+    }, [customizeModal]);
+
+    const cupIceLevel = useMemo(() => {
+        for (const [cat, opts] of optionsByCategory.entries()) {
+            if (cat.toLowerCase().includes("ice")) {
+                const selected = opts.find((o) => pendingCustomIds.includes(o.id));
+                if (selected) return selected.displayName || selected.name;
+            }
+        }
+        return "Regular Ice";
+    }, [optionsByCategory, pendingCustomIds]);
+
+    const cupToppingIds = useMemo(() => {
+        for (const [cat, opts] of optionsByCategory.entries()) {
+            if (cat.toLowerCase().includes("topping")) {
+                const toppingOptionIds = new Set(opts.map((o) => o.id));
+                return pendingCustomIds.filter((id) => toppingOptionIds.has(id));
+            }
+        }
+        return [];
+    }, [optionsByCategory, pendingCustomIds]);
+
     const a11yChrome = (
         <AccessibilityDrawer
             contrastPct={contrastPct}
@@ -577,9 +598,7 @@ export default function CustomerView() {
                                     className={`kiosk-menu-tab ${selected ? "kiosk-menu-tab-active" : ""}`}
                                     style={
                                         selected
-                                            ? {
-                                                  backgroundImage: `linear-gradient(135deg, ${section.gradient})`,
-                                              }
+                                            ? { backgroundImage: `linear-gradient(135deg, ${section.gradient})` }
                                             : undefined
                                     }
                                     onClick={() => setMenuTab(section.key)}
@@ -730,6 +749,7 @@ export default function CustomerView() {
             </div>
             </div>
 
+            {/* ── Customize Modal (wide, with boba cup) ── */}
             {customizeModal && (
                 <div
                     className="kiosk-modal-backdrop"
@@ -742,116 +762,138 @@ export default function CustomerView() {
                         }
                     }}
                 >
-                    <div className="kiosk-modal kiosk-customize-modal">
-                        <p className="kiosk-modal-title">
-                            {t('customize')} {getDisplayMenuName(customizeModal.item)}
-                        </p>
-                        <p className="kiosk-modal-label">
-                            {customizeModal.variants
-                                ? t('pick_size')
-                                : ""}
-                            {customizeModal.variants && customizeModal.item.customizable
-                                ? " · "
-                                : ""}
-                            {customizeModal.item.customizable
-                                ? t('ice_sugar_hint')
-                                : ""}
-                        </p>
-                        <div className="kiosk-customize-scroll">
-                            {customizeModal.variants && (
-                                <div className="kiosk-customize-block">
-                                    <div className="kiosk-customize-cat">
-                                        {t('size')}
-                                        <span className="kiosk-customize-cat-hint">{t('one_only')}</span>
-                                    </div>
-                                    <div
-                                        className="kiosk-customize-chips kiosk-customize-chips-exclusive"
-                                        role="radiogroup"
-                                        aria-label={t("size_option_group")}
-                                    >
-                                        <button
-                                            type="button"
-                                            role="radio"
-                                            aria-checked={pendingSize === "regular"}
-                                            className={`kiosk-chip ${pendingSize === "regular" ? "on" : ""}`}
-                                            onClick={() => setPendingSize("regular")}
+                    <div className="kiosk-modal kiosk-customize-modal kiosk-customize-modal--wide">
+
+                        {/* Left column: animated boba cup */}
+                        <div className="kiosk-customize-cup-col">
+                            <BobaCupAnimation
+                                itemName={customizeModal.item.name}
+                                sectionKey={cupSectionKey}
+                                size={pendingSize}
+                                iceLevel={cupIceLevel}
+                                toppingIds={cupToppingIds}
+                                customizationOptions={customizationOptions}
+                            />
+                        </div>
+
+                        {/* Right column: controls */}
+                        <div className="kiosk-customize-controls-col">
+                            <p className="kiosk-modal-title">
+                                {t('customize')} {getDisplayMenuName(customizeModal.item)}
+                            </p>
+                            <p className="kiosk-modal-label">
+                                {customizeModal.variants ? t('pick_size') : ""}
+                                {customizeModal.variants && customizeModal.item.customizable ? " · " : ""}
+                                {customizeModal.item.customizable ? t('ice_sugar_hint') : ""}
+                            </p>
+                            <div className="kiosk-customize-scroll">
+                                {customizeModal.variants && (
+                                    <div className="kiosk-customize-block">
+                                        <div className="kiosk-customize-cat">
+                                            {t('size')}
+                                            <span className="kiosk-customize-cat-hint">{t('one_only')}</span>
+                                        </div>
+                                        <div
+                                            className="kiosk-customize-chips kiosk-customize-chips-exclusive"
+                                            role="radiogroup"
+                                            aria-label={t("size_option_group")}
                                         >
-                                            {t('regular')} — {fmt(customizeModal.item.price)}
-                                        </button>
-                                        <button
-                                            type="button"
-                                            role="radio"
-                                            aria-checked={pendingSize === "large"}
-                                            className={`kiosk-chip ${pendingSize === "large" ? "on" : ""}`}
-                                            onClick={() => setPendingSize("large")}
-                                        >
-                                            {t('large')} — {fmt(customizeModal.variants.large.price)}
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                            {customizeModal.item.customizable && [...optionsByCategory.entries()].map(([cat, opts]) => (
-                                <div key={cat} className="kiosk-customize-block">
-                                    <div className="kiosk-customize-cat">
-                                        {getDisplayCustomizationCategory(cat)}
-                                        {isExclusiveCategory(cat) && (
-                                            <span className="kiosk-customize-cat-hint">
-                                                {t('one_only')}
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div
-                                        className={
-                                            isExclusiveCategory(cat)
-                                                ? "kiosk-customize-chips kiosk-customize-chips-exclusive"
-                                                : "kiosk-customize-chips"
-                                        }
-                                        role={
-                                            isExclusiveCategory(cat)
-                                                ? "radiogroup"
-                                                : undefined
-                                        }
-                                        aria-label={getDisplayCustomizationCategory(cat)}
-                                    >
-                                        {sortOptionsForDisplay(cat, opts).map((o) => (
                                             <button
                                                 type="button"
-                                                key={o.id}
-                                                role={
-                                                    isExclusiveCategory(cat)
-                                                        ? "radio"
-                                                        : undefined
-                                                }
-                                                aria-checked={
-                                                    isExclusiveCategory(cat)
-                                                        ? pendingCustomIds.includes(o.id)
-                                                        : undefined
-                                                }
-                                                className={`kiosk-chip ${pendingCustomIds.includes(o.id) ? "on" : ""}`}
-                                                onClick={() =>
-                                                    handleCustomizationClick(cat, o.id)
-                                                }
+                                                role="radio"
+                                                aria-checked={pendingSize === "regular"}
+                                                className={`kiosk-chip ${pendingSize === "regular" ? "on" : ""}`}
+                                                onClick={() => setPendingSize("regular")}
                                             >
-                                                {displayCustomizationNameById.get(o.id) || o.displayName || o.name}
-                                                {Number(o.priceModifier) > 0 && (
-                                                    <span> +{fmt(o.priceModifier)}</span>
-                                                )}
+                                                {t('regular')} — {fmt(customizeModal.item.price)}
                                             </button>
-                                        ))}
+                                            <button
+                                                type="button"
+                                                role="radio"
+                                                aria-checked={pendingSize === "large"}
+                                                className={`kiosk-chip ${pendingSize === "large" ? "on" : ""}`}
+                                                onClick={() => setPendingSize("large")}
+                                            >
+                                                {t('large')} — {fmt(customizeModal.variants.large.price)}
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                )}
+                                {customizeModal.item.customizable && [...optionsByCategory.entries()].map(([cat, opts]) => (
+                                    <div key={cat} className="kiosk-customize-block">
+                                        <div className="kiosk-customize-cat">
+                                            {getDisplayCustomizationCategory(cat)}
+                                            {isExclusiveCategory(cat) && (
+                                                <span className="kiosk-customize-cat-hint">
+                                                    {t('one_only')}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div
+                                            className={
+                                                isExclusiveCategory(cat)
+                                                    ? "kiosk-customize-chips kiosk-customize-chips-exclusive"
+                                                    : "kiosk-customize-chips"
+                                            }
+                                            role={isExclusiveCategory(cat) ? "radiogroup" : undefined}
+                                            aria-label={getDisplayCustomizationCategory(cat)}
+                                        >
+                                            {sortOptionsForDisplay(cat, opts).map((o) => (
+                                                <button
+                                                    type="button"
+                                                    key={o.id}
+                                                    role={isExclusiveCategory(cat) ? "radio" : undefined}
+                                                    aria-checked={
+                                                        isExclusiveCategory(cat)
+                                                            ? pendingCustomIds.includes(o.id)
+                                                            : undefined
+                                                    }
+                                                    className={`kiosk-chip ${pendingCustomIds.includes(o.id) ? "on" : ""}`}
+                                                    onClick={() => handleCustomizationClick(cat, o.id)}
+                                                >
+                                                    {displayCustomizationNameById.get(o.id) || o.displayName || o.name}
+                                                    {Number(o.priceModifier) > 0 && (
+                                                        <span> +{fmt(o.priceModifier)}</span>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="kiosk-modal-actions">
+                                <button
+                                    type="button"
+                                    className="kiosk-modal-cancel"
+                                    onClick={() => {
+                                        setCustomizeModal(null);
+                                        setPendingCustomIds([]);
+                                        setPendingSize("regular");
+                                    }}
+                                >
+                                    {t('cancel')}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="kiosk-modal-confirm"
+                                    onClick={confirmCustomize}
+                                >
+                                    {t('add_to_cart')}
+                                </button>
+                            </div>
                         </div>
-                        <div className="kiosk-modal-actions">
-                            <button type="button" className="kiosk-modal-cancel" onClick={() => { setCustomizeModal(null); setPendingCustomIds([]); setPendingSize("regular"); }}>{t('cancel')}</button>
-                            <button type="button" className="kiosk-modal-confirm" onClick={confirmCustomize}>{t('add_to_cart')}</button>
-                        </div>
+
                     </div>
                 </div>
             )}
 
+            {/* ── Payment Modal ── */}
             {showPayModal && (
-                <div className="kiosk-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}>
+                <div
+                    className="kiosk-modal-backdrop"
+                    role="presentation"
+                    onClick={(e) => { if (e.target === e.currentTarget) setShowPayModal(false); }}
+                >
                     <div className="kiosk-modal">
                         <p className="kiosk-modal-title">{t('almost_there')}</p>
                         <p className="kiosk-modal-total">{fmt(total)}</p>
@@ -859,11 +901,16 @@ export default function CustomerView() {
                         <p className="kiosk-modal-label">{t('how_to_pay')}</p>
                         <div className="kiosk-pay-methods">
                             {[
-                                { key: "CASH", label: t('pay_cash'), icon: "💵" },
-                                { key: "CARD", label: t('pay_card'), icon: "💳" },
+                                { key: "CASH",   label: t('pay_cash'),   icon: "💵" },
+                                { key: "CARD",   label: t('pay_card'),   icon: "💳" },
                                 { key: "MOBILE", label: t('pay_mobile'), icon: "📱" },
                             ].map((m) => (
-                                <button type="button" key={m.key} className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`} onClick={() => setPayMethod(m.key)}>
+                                <button
+                                    type="button"
+                                    key={m.key}
+                                    className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`}
+                                    onClick={() => setPayMethod(m.key)}
+                                >
                                     <span className="pay-icon">{m.icon}</span>
                                     {m.label}
                                 </button>
@@ -871,8 +918,15 @@ export default function CustomerView() {
                         </div>
 
                         <div className="kiosk-modal-actions">
-                            <button type="button" className="kiosk-modal-cancel" onClick={() => setShowPayModal(false)}>{t('go_back')}</button>
-                            <button type="button" className="kiosk-modal-confirm" onClick={handlePay} disabled={paying}>
+                            <button type="button" className="kiosk-modal-cancel" onClick={() => setShowPayModal(false)}>
+                                {t('go_back')}
+                            </button>
+                            <button
+                                type="button"
+                                className="kiosk-modal-confirm"
+                                onClick={handlePay}
+                                disabled={paying}
+                            >
                                 {paying ? t('processing') : t('confirm_order')}
                             </button>
                         </div>
