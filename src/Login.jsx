@@ -147,7 +147,7 @@ function Login() {
 
             <form onSubmit={handleLogin} className="login-form">
               {role === 'manager' ? (
-                <div className="google-login-section">
+                <div className="google-login-section" style={{ textAlign: 'center' }}>
                   <p className="customer-note">
                     Manager access requires a Google account.<br />
                     You will be redirected to sign in.
@@ -155,6 +155,7 @@ function Login() {
                   <button
                     type="button"
                     className="login-btn google-btn"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}
                     onClick={() => {
                       window.location.href = `${API_BASE}/api/auth/google`
                     }}
@@ -167,7 +168,7 @@ function Login() {
                     Sign in with Google
                   </button>
                 </div>
-              ) : role === 'customer' ? (
+              ) : role === 'cashier' ? (
                 <>
                   <div className="field">
                     <label htmlFor="username">{t('username')}</label>
@@ -180,7 +181,6 @@ function Login() {
                       autoComplete="username"
                     />
                   </div>
-
                   <div className="field">
                     <label htmlFor="password">{t('password')}</label>
                     <input
@@ -199,7 +199,6 @@ function Login() {
                     {t('customer_welcome')}<br />
                     {t('customer_note')}
                   </p>
-                  
                   <button type="button" className="login-btn menu-view-btn" onClick={() => navigate('/menu')}>
                     {t('view_menu')}
                   </button>
@@ -211,6 +210,12 @@ function Login() {
               {role === 'cashier' && (
                 <button className="login-btn" type="submit" disabled={loading}>
                   {loading ? t('signing_in') : t('sign_in')}
+                </button>
+              )}
+
+              {role === 'customer' && (
+                <button className="login-btn" type="button" onClick={() => navigate('/customer')}>
+                  {t('continue_as_customer')}
                 </button>
               )}
             </form>

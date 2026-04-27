@@ -75,7 +75,7 @@ def login():
 
 @auth_bp.route("/google")
 def google_login():
-    """Redirect browser to Google's consent screen."""
+    """Step 1: Redirect browser to Google consent screen."""
     flow = make_flow()
     auth_url, state = flow.authorization_url(
         access_type="offline",
@@ -83,25 +83,21 @@ def google_login():
         prompt="select_account",
     )
 
+    # Store state in a short-lived cookie so we can verify it on callback
     state_token = jwt.encode(
-        {"state": state, "exp": time.time() + 600},  # expires in 10 minutes
+        {"state": state, "exp": time.time() + 600},
         FLASK_SECRET_KEY,
         algorithm="HS256",
     )
 
-    # Append state_token to the auth_url as a custom param Google will echo back
-    # via the redirect — we store it in the URL itself since we have no session
-    final_url = auth_url + f"&state={state}"
-
-    # Store state in a short-lived JWT passed via redirect to callback
-    response = redirect(final_url)
+    response = redirect(auth_url)  # use auth_url directly, no manual state append
     response.set_cookie(
         "oauth_state",
         state_token,
-        max_age=600,          # 10 minutes
+        max_age=600,
         httponly=True,
         secure=True,
-        samesite="None",      # needed because Google redirects cross-origin
+        samesite="None",
     )
     return response
 
