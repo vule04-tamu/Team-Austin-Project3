@@ -20,6 +20,7 @@ ALLOWED_MANAGER_EMAILS = {
     "reveille.bubbletea@gmail.com",
     "derianhung@tamu.edu",
     "vule04@tamu.edu",
+    "brkalb25@tamu.edu",
 }
 
 GOOGLE_AUTH_URL  = "https://accounts.google.com/o/oauth2/v2/auth"
