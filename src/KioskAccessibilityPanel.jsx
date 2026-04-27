@@ -58,12 +58,6 @@ export default function KioskAccessibilityPanel({ open, onOpenChange, children }
                         onClick={() => onOpenChange(!open)}
                         aria-expanded={open}
                         aria-controls="kiosk-a11y-drawer"
-                        aria-label={
-                            open
-                                ? t("close_accessibility_options")
-                                : t("open_accessibility_options")
-                        }
-                        title={t("accessibility")}
                     >
                         <span className="kiosk-a11y-edge-tab-icon" aria-hidden>
                             {open ? "›" : "‹"}

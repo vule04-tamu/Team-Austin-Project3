@@ -89,11 +89,14 @@ export default function Chatbot() {
         <div className="chatbot-container">
             {/* Floating Button */}
             <button
+                type="button"
                 className="chatbot-button"
                 onClick={() => setIsOpen(!isOpen)}
-                title="Chat with us"
+                aria-label={isOpen ? "Close chat" : "Chat with us"}
             >
                 <svg
+                    aria-hidden="true"
+                    focusable="false"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"
                     fill="none"
@@ -108,15 +111,20 @@ export default function Chatbot() {
 
             {/* Chat Window */}
             {isOpen && (
-                <div className="chatbot-window">
+                <div
+                    className="chatbot-window"
+                    role="dialog"
+                    aria-labelledby="chatbot-title"
+                >
                     <div className="chatbot-header">
-                        <h3>Boba Assistant</h3>
+                        <h3 id="chatbot-title">Boba Assistant</h3>
                         <button
+                            type="button"
                             className="close-button"
                             onClick={() => setIsOpen(false)}
-                            title="Close chat"
+                            aria-label="Close chat"
                         >
-                            ✕
+                            <span aria-hidden="true">✕</span>
                         </button>
                     </div>
 
@@ -133,10 +141,14 @@ export default function Chatbot() {
                         ))}
                         {loading && (
                             <div className="message bot">
-                                <div className="message-content typing">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                                <div
+                                    className="message-content typing"
+                                    role="status"
+                                    aria-label="Assistant is typing"
+                                >
+                                    <span aria-hidden="true"></span>
+                                    <span aria-hidden="true"></span>
+                                    <span aria-hidden="true"></span>
                                 </div>
                             </div>
                         )}
@@ -152,6 +164,7 @@ export default function Chatbot() {
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
                             placeholder="Ask for recommendations..."
+                            aria-label="Ask the boba assistant"
                             disabled={loading}
                             className="chatbot-input"
                         />

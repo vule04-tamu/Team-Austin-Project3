@@ -273,7 +273,7 @@ export default function CustomerView() {
             )
         );
         if (!drinkItems.length) {
-            showToast("😢 No drinks available right now!");
+            showToast("No drinks available right now!");
             return;
         }
 
@@ -302,7 +302,7 @@ export default function CustomerView() {
         }
 
         pushLine(actualItem, customIds, true);
-        showToast(`🎲 Surprise! ${getDisplayMenuName(actualItem)} added!`);
+        showToast(`Surprise! ${getDisplayMenuName(actualItem)} added!`);
     }, [
         menuItems, sizeMap, customizationOptions, optionsByCategory,
         pushLine, getDisplayMenuName, showToast,
@@ -411,7 +411,7 @@ export default function CustomerView() {
             setShowPayModal(false);
             setOrderSuccess(true);
         } catch (e) {
-            showToast("✗ " + e.message);
+            showToast("Error: " + e.message);
         } finally {
             setPaying(false);
         }
@@ -438,6 +438,35 @@ export default function CustomerView() {
     }, [grouped, menuTab]);
 
     const activeSection = grouped.find((s) => s.key === menuTab);
+    const visibleSections = useMemo(
+        () => grouped.filter((s) => s.items.length > 0),
+        [grouped],
+    );
+
+    const handleMenuTabKeyDown = useCallback((event, sectionKey) => {
+        const currentIndex = visibleSections.findIndex((s) => s.key === sectionKey);
+        if (currentIndex === -1) return;
+
+        let nextIndex = null;
+        if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+            nextIndex = (currentIndex + 1) % visibleSections.length;
+        } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+            nextIndex = (currentIndex - 1 + visibleSections.length) % visibleSections.length;
+        } else if (event.key === "Home") {
+            nextIndex = 0;
+        } else if (event.key === "End") {
+            nextIndex = visibleSections.length - 1;
+        }
+
+        if (nextIndex == null) return;
+
+        event.preventDefault();
+        const nextSection = visibleSections[nextIndex];
+        setMenuTab(nextSection.key);
+        requestAnimationFrame(() => {
+            document.getElementById(`kiosk-menu-tab-${nextSection.key}`)?.focus();
+        });
+    }, [visibleSections]);
 
     const contrastStyle = { filter: `contrast(${contrastPct}%)` };
 
@@ -479,18 +508,18 @@ export default function CustomerView() {
         return (
             <div className="kiosk-root">
                 {a11yChrome}
-                <div
+                <main
                     ref={contrastLayerRef}
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
                 >
                     <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-loading">
-                            <div className="kiosk-spinner" />
+                            <div className="kiosk-spinner" aria-hidden="true" />
                             <span>{t("loading_menu")}</span>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -499,7 +528,7 @@ export default function CustomerView() {
         return (
             <div className="kiosk-root">
                 {a11yChrome}
-                <div
+                <main
                     ref={contrastLayerRef}
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
@@ -509,7 +538,7 @@ export default function CustomerView() {
                             {error}
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -518,14 +547,15 @@ export default function CustomerView() {
         return (
             <div className="kiosk-root">
                 {a11yChrome}
-                <div
+                <main
                     ref={contrastLayerRef}
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
+                    aria-labelledby="kiosk-order-success-heading"
                 >
                     <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-success">
-                            <h2>{t("order_placed")}</h2>
+                            <h2 id="kiosk-order-success-heading">{t("order_placed")}</h2>
                             <p>{t("thank_you")}</p>
                             <div className="kiosk-success-order">
                                 {t("order_number")}
@@ -543,7 +573,7 @@ export default function CustomerView() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -572,29 +602,34 @@ export default function CustomerView() {
 
             {a11yChrome}
 
-            <div
+            <main
                 ref={contrastLayerRef}
                 className="kiosk-contrast-layer"
                 style={contrastStyle}
+                aria-labelledby="kiosk-welcome-heading"
             >
             <div className="kiosk-contrast-mag-inner">
-            <div className="kiosk-hero kiosk-hero-compact">
-                <h1>{t('welcome')}</h1>
+            <section className="kiosk-hero kiosk-hero-compact" aria-labelledby="kiosk-welcome-heading">
+                <h1 id="kiosk-welcome-heading">{t('welcome')}</h1>
                 <p>{t('pick_category')}</p>
-            </div>
+            </section>
 
             <div className="kiosk-body">
-                <div className="kiosk-menu-column">
+                <section className="kiosk-menu-column">
                     <div className="kiosk-menu-tabs" role="tablist" aria-label={t("menu_categories")}>
                         {grouped.map((section) => {
                             if (section.items.length === 0) return null;
                             const selected = menuTab === section.key;
+                            const tabId = `kiosk-menu-tab-${section.key}`;
                             return (
                                 <button
                                     key={section.key}
+                                    id={tabId}
                                     type="button"
                                     role="tab"
                                     aria-selected={selected}
+                                    aria-controls="kiosk-menu-panel"
+                                    tabIndex={selected ? 0 : -1}
                                     className={`kiosk-menu-tab ${selected ? "kiosk-menu-tab-active" : ""}`}
                                     style={
                                         selected
@@ -602,6 +637,7 @@ export default function CustomerView() {
                                             : undefined
                                     }
                                     onClick={() => setMenuTab(section.key)}
+                                    onKeyDown={(event) => handleMenuTabKeyDown(event, section.key)}
                                 >
                                     {t(section.tabKey)}
                                 </button>
@@ -609,9 +645,10 @@ export default function CustomerView() {
                         })}
                     </div>
                     <div
+                        id="kiosk-menu-panel"
                         className="kiosk-menu-tab-panel"
                         role="tabpanel"
-                        aria-label={activeSection ? t(activeSection.labelKey) : t("menu")}
+                        aria-labelledby={activeSection ? `kiosk-menu-tab-${activeSection.key}` : undefined}
                     >
                         {activeSection && activeSection.items.length > 0 ? (
                             <div className="kiosk-grid">
@@ -623,13 +660,15 @@ export default function CustomerView() {
                                     );
                                     const color = cardColor(item.id);
                                     return (
-                                        <div
+                                        <button
+                                            type="button"
                                             key={item.id}
                                             className="kiosk-card"
                                             onClick={() => onDrinkClick(item)}
                                         >
                                             <div
                                                 className="kiosk-card-banner"
+                                                aria-hidden="true"
                                                 style={{ background: color }}
                                             />
                                             <div className="kiosk-card-body">
@@ -640,17 +679,13 @@ export default function CustomerView() {
                                                     <span className="kiosk-card-price">
                                                         {fmt(item.price)}
                                                     </span>
-                                                    <button
-                                                        type="button"
+                                                    <span
                                                         className="kiosk-card-add"
+                                                        aria-hidden="true"
                                                         style={{ background: color }}
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            onDrinkClick(item);
-                                                        }}
                                                     >
                                                         +
-                                                    </button>
+                                                    </span>
                                                 </div>
                                             </div>
                                             {item.customizable &&
@@ -664,7 +699,7 @@ export default function CustomerView() {
                                                     {t('in_cart')}: {inCart.qty}
                                                 </div>
                                             )}
-                                        </div>
+                                        </button>
                                     );
                                 })}
                             </div>
@@ -672,7 +707,7 @@ export default function CustomerView() {
                             <p className="kiosk-tab-empty">{t('no_drinks_cat')}</p>
                         )}
                     </div>
-                </div>
+                </section>
 
                 <aside className="kiosk-cart">
                     <div className="kiosk-cart-header">
@@ -682,7 +717,6 @@ export default function CustomerView() {
                                 type="button"
                                 className="kiosk-surprise-btn"
                                 onClick={handleSurpriseMe}
-                                title="Add a random drink to your order"
                             >
                                 {t('Surprise Me!') || 'Surprise Me!'}
                             </button>
@@ -704,7 +738,11 @@ export default function CustomerView() {
                                 const csum = customizationSummary(item);
                                 return (
                                 <div key={item.lineId} className="kiosk-cart-item">
-                                    <div className="kiosk-cart-item-dot" style={{ background: cardColor(item.id) }} />
+                                    <div
+                                        className="kiosk-cart-item-dot"
+                                        aria-hidden="true"
+                                        style={{ background: cardColor(item.id) }}
+                                    />
                                     <div className="kiosk-cart-item-info">
                                         <div className="kiosk-cart-item-name">{getDisplayMenuName(item)}</div>
                                         {csum && (
@@ -713,9 +751,23 @@ export default function CustomerView() {
                                         <div className="kiosk-cart-item-price">{fmt(lineUnitPrice(item))} {t('each')}</div>
                                     </div>
                                     <div className="kiosk-cart-item-controls">
-                                        <button type="button" className="kiosk-qty-btn" onClick={() => changeQty(item.lineId, -1)}>−</button>
+                                        <button
+                                            type="button"
+                                            className="kiosk-qty-btn"
+                                            aria-label={`−, Decrease ${getDisplayMenuName(item)} quantity`}
+                                            onClick={() => changeQty(item.lineId, -1)}
+                                        >
+                                            −
+                                        </button>
                                         <span className="kiosk-qty-num">{item.qty}</span>
-                                        <button type="button" className="kiosk-qty-btn" onClick={() => changeQty(item.lineId, 1)}>+</button>
+                                        <button
+                                            type="button"
+                                            className="kiosk-qty-btn"
+                                            aria-label={`+, Increase ${getDisplayMenuName(item)} quantity`}
+                                            onClick={() => changeQty(item.lineId, 1)}
+                                        >
+                                            +
+                                        </button>
                                     </div>
                                 </div>
                                 );
@@ -911,7 +963,7 @@ export default function CustomerView() {
                                     className={`kiosk-pay-btn ${payMethod === m.key ? "active" : ""}`}
                                     onClick={() => setPayMethod(m.key)}
                                 >
-                                    <span className="pay-icon">{m.icon}</span>
+                                    <span className="pay-icon" aria-hidden="true">{m.icon}</span>
                                     {m.label}
                                 </button>
                             ))}
@@ -935,7 +987,7 @@ export default function CustomerView() {
             )}
 
             {toast && <div className="kiosk-toast">{toast}</div>}
-            </div>
+            </main>
         </div>
     );
 }

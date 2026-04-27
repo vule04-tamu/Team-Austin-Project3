@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 
 /**
  * BobaCupAnimation
@@ -19,6 +19,8 @@ export default function BobaCupAnimation({
   toppingIds = [],
   customizationOptions = [],
 }) {
+  const titleId = useId();
+
   /* ── Liquid colour ───────────────────────────────────────────── */
   const liquidColor = useMemo(() => {
     const n = itemName.toLowerCase();
@@ -207,6 +209,8 @@ export default function BobaCupAnimation({
       padding: "0 0 4px",
     }}>
       <svg
+        role="img"
+        aria-labelledby={titleId}
         viewBox="0 0 300 240"
         xmlns="http://www.w3.org/2000/svg"
         style={{
@@ -217,6 +221,7 @@ export default function BobaCupAnimation({
           filter: "drop-shadow(0 8px 24px rgba(0,0,0,0.25))",
         }}
       >
+        <title id={titleId}>{`${itemName || "Drink"} preview`}</title>
         <defs>
           {/* Liquid fill gradient */}
           <linearGradient id="liquidGrad" x1="0" y1="0" x2="1" y2="0">
