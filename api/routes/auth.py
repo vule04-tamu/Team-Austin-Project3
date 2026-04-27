@@ -12,7 +12,7 @@ auth_bp = Blueprint("auth", __name__)
 GOOGLE_CLIENT_ID     = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REDIRECT_URI  = os.environ.get("GOOGLE_REDIRECT_URI")
-FRONTEND_URL         = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+FRONTEND_URL         = os.environ.get("FRONTEND_URL", "https://team-austin-project3-two.vercel.app")
 FLASK_SECRET_KEY     = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 
 # Allowed Google emails that are managers — add your manager emails here
