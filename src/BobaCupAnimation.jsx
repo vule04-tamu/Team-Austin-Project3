@@ -22,6 +22,7 @@ export default function BobaCupAnimation({
   /* ── Liquid colour ───────────────────────────────────────────── */
   const liquidColor = useMemo(() => {
     const n = itemName.toLowerCase();
+    if (n.includes("fresh milk"))    return { base: "#f5f0eb", mid: "#e8e0d8", foam: "#ffffff" };
     if (n.includes("taro"))          return { base: "#c9a0dc", mid: "#b57abf", foam: "#e8cff5" };
     if (n.includes("matcha"))        return { base: "#7ab648", mid: "#5d9130", foam: "#c5e8a0" };
     if (n.includes("brown sugar"))   return { base: "#8b5e3c", mid: "#6e4523", foam: "#d4a574" };
@@ -78,36 +79,38 @@ export default function BobaCupAnimation({
 
   /* ── Sizes ───────────────────────────────────────────────────── */
   const isLarge = size === "large";
-  // Cup SVG viewBox is fixed; we scale the cup shape
   const cupW = isLarge ? 110 : 88;
   const cupH = isLarge ? 170 : 140;
-  const cupX = isLarge ? 95 : 106; // center offset in 300-wide viewBox
+  const cupX = isLarge ? 95 : 106;
   const cupTopY = isLarge ? 30 : 44;
   const cupBotY = isLarge ? 200 : 184;
 
   /* ── Ice ─────────────────────────────────────────────────────── */
-  const iceCount = useMemo(() => {
-    if (iceLevel === "No Ice")    return 0;
-    if (iceLevel === "Light Ice") return 2;
-    if (iceLevel === "Regular Ice") return 4;
-    if (iceLevel === "Extra Ice") return 7;
-    return 4;
+  // Count and size vary dramatically between levels
+  const iceConfig = useMemo(() => {
+    if (iceLevel === "No Ice")      return { count: 0, minSize: 0,  maxSize: 0  };
+    if (iceLevel === "Light Ice")   return { count: 2, minSize: 10, maxSize: 14 };
+    if (iceLevel === "Regular Ice") return { count: 5, minSize: 14, maxSize: 20 };
+    if (iceLevel === "Extra Ice")   return { count: 9, minSize: 20, maxSize: 30 };
+    return { count: 5, minSize: 14, maxSize: 20 };
   }, [iceLevel]);
 
-  /* deterministic ice positions */
+  /* deterministic ice positions — spread across more of the cup */
   const iceChunks = useMemo(() => {
     const chunks = [];
     const positions = [
-      { x: 130, y: 80 }, { x: 155, y: 95 }, { x: 120, y: 110 },
-      { x: 160, y: 70 }, { x: 140, y: 60 }, { x: 115, y: 75 },
-      { x: 168, y: 110 },
+      { x: 108, y: 82 }, { x: 162, y: 88 }, { x: 130, y: 68 },
+      { x: 150, y: 112 }, { x: 118, y: 108 }, { x: 170, y: 70 },
+      { x: 140, y: 95 }, { x: 100, y: 70 }, { x: 165, y: 120 },
     ];
-    for (let i = 0; i < iceCount; i++) {
+    for (let i = 0; i < iceConfig.count; i++) {
       const p = positions[i % positions.length];
-      chunks.push({ ...p, rot: (i * 37) % 60 - 30, size: 14 + (i % 3) * 4 });
+      const sizeRange = iceConfig.maxSize - iceConfig.minSize;
+      const size = iceConfig.minSize + (i % 3) * (sizeRange / 2);
+      chunks.push({ ...p, rot: (i * 37) % 60 - 30, size });
     }
     return chunks;
-  }, [iceCount]);
+  }, [iceConfig]);
 
   /* ── Topping render helpers ──────────────────────────────────── */
   const renderToppings = () => {
@@ -116,17 +119,17 @@ export default function BobaCupAnimation({
 
     for (const t of toppingDefs) {
       if (t.type === "boba" || t.type === "crystal" || t.type === "popping") {
+        // 3 rows of beads — 12 total positions
         const positions = [
-          [118, 168], [132, 174], [146, 168], [160, 174],
-          [124, 181], [140, 181], [154, 181],
+          [112, 163], [124, 168], [136, 163], [148, 168], [160, 163], [172, 168],
+          [108, 178], [120, 183], [132, 178], [144, 183], [156, 178], [168, 183],
         ];
-        const slice = positions.slice(bobas * 3, bobas * 3 + 3);
-        slice.forEach(([x, y]) => {
-          const baseColor = t.color;
+        const start = bobas * 6;
+        positions.slice(start, start + 6).forEach(([x, y]) => {
           const isTransparent = t.type === "crystal";
           elements.push(
             <circle key={`${t.type}-${x}-${y}`} cx={x} cy={y} r={7}
-              fill={baseColor}
+              fill={t.color}
               stroke={isTransparent ? "rgba(100,200,255,0.5)" : "rgba(0,0,0,0.2)"}
               strokeWidth={isTransparent ? 1.5 : 0}
               style={{ filter: isTransparent ? "none" : `drop-shadow(0 2px 2px rgba(0,0,0,0.3))` }}
@@ -141,18 +144,22 @@ export default function BobaCupAnimation({
         });
         bobas++;
       } else if (t.type === "jelly-cube" || t.type === "jelly-blob") {
-        const jPos = [[116, 165], [136, 170], [156, 165]];
-        jPos.slice(jellies, jellies + 2).forEach(([x, y]) => {
+        // 6 jelly pieces in two rows
+        const jPos = [
+          [112, 162], [128, 168], [144, 162], [160, 168],
+          [118, 180], [138, 180], [158, 180],
+        ];
+        jPos.slice(jellies * 4, jellies * 4 + 4).forEach(([x, y]) => {
           if (t.type === "jelly-cube") {
             elements.push(
-              <rect key={`jelly-${x}-${y}`} x={x - 7} y={y - 6} width={14} height={12} rx={3}
+              <rect key={`jelly-${x}-${y}`} x={x - 8} y={y - 7} width={16} height={13} rx={3}
                 fill={t.color} opacity={0.85}
                 style={{ filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.15))" }}
               />
             );
           } else {
             elements.push(
-              <ellipse key={`jelly-${x}-${y}`} cx={x} cy={y} rx={8} ry={6}
+              <ellipse key={`jelly-${x}-${y}`} cx={x} cy={y} rx={9} ry={7}
                 fill={t.color} opacity={0.85}
                 style={{ filter: "drop-shadow(0 2px 3px rgba(0,0,0,0.15))" }}
               />
@@ -161,12 +168,13 @@ export default function BobaCupAnimation({
         });
         jellies++;
       } else if (t.type === "chia") {
+        // Dense scatter of chia seeds
         const chiaPos = [
-          [122,170],[128,176],[134,171],[140,177],[146,170],[152,176],[158,171],
-          [125,183],[131,183],[137,183],[143,183],[149,183],
+          [112,166],[118,172],[124,167],[130,173],[136,167],[142,173],[148,167],[154,173],[160,167],[166,173],
+          [115,180],[121,180],[127,180],[133,180],[139,180],[145,180],[151,180],[157,180],[163,180],
         ];
-        chiaPos.slice(chias, chias + 8).forEach(([x, y]) => {
-          elements.push(<ellipse key={`chia-${x}-${y}`} cx={x} cy={y} rx={2.5} ry={1.5} fill={t.color} opacity={0.7} />);
+        chiaPos.slice(chias, chias + 16).forEach(([x, y]) => {
+          elements.push(<ellipse key={`chia-${x}-${y}`} cx={x} cy={y} rx={2.5} ry={1.5} fill={t.color} opacity={0.75} />);
         });
         chias++;
       } else if (t.type === "pudding") {
@@ -185,7 +193,6 @@ export default function BobaCupAnimation({
   };
 
   /* ── Cup path (trapezoid with rounded bottom) ────────────────── */
-  // We'll use a fixed coordinate cup in a 300×240 viewBox, scaling via transform
   const scale = isLarge ? 1.22 : 1.0;
   const tx = isLarge ? -15 : 0;
   const ty = isLarge ? -20 : 0;
@@ -248,10 +255,6 @@ export default function BobaCupAnimation({
               from { transform: translateY(100%); }
               to   { transform: translateY(0%); }
             }
-            @keyframes liquidWobble {
-              0%,100% { d: path("M 87 102 Q 113 96 140 100 Q 167 104 193 100"); }
-              50%      { d: path("M 87 102 Q 113 108 140 104 Q 167 100 193 102"); }
-            }
             @keyframes bubbleFloat {
               0%   { transform: translateY(0px) scale(1); opacity: 0.6; }
               50%  { transform: translateY(-6px) scale(1.1); opacity: 0.9; }
@@ -311,7 +314,7 @@ export default function BobaCupAnimation({
               {renderToppings()}
             </g>
 
-            {/* Ice chunks (above liquid surface slightly) */}
+            {/* Ice chunks */}
             {iceChunks.map((chunk, i) => (
               <g
                 key={i}
@@ -321,7 +324,7 @@ export default function BobaCupAnimation({
                 <rect
                   x={-chunk.size / 2} y={-chunk.size / 2}
                   width={chunk.size} height={chunk.size}
-                  rx={3}
+                  rx={4}
                   fill="url(#iceGrad)"
                   stroke="rgba(200,235,255,0.6)"
                   strokeWidth="1"
