@@ -169,8 +169,7 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "small" ? "active" : ""}`}
                 onClick={() => setScale("small")}
-                title={t("smaller_text")}
-                aria-label={t("smaller_text")}
+                aria-label={`A, ${t("smaller_text")}`}
             >
                 <span className="size-indicator small">A</span>
             </button>
@@ -178,8 +177,7 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "normal" ? "active" : ""}`}
                 onClick={() => setScale("normal")}
-                title={t("normal_text")}
-                aria-label={t("normal_text")}
+                aria-label={`A, ${t("normal_text")}`}
             >
                 <span className="size-indicator normal">A</span>
             </button>
@@ -187,8 +185,7 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "large" ? "active" : ""}`}
                 onClick={() => setScale("large")}
-                title={t("larger_text")}
-                aria-label={t("larger_text")}
+                aria-label={`A, ${t("larger_text")}`}
             >
                 <span className="size-indicator large">A</span>
             </button>
@@ -196,8 +193,7 @@ export function TextSizeButtonRow({ className = "", buttonClassName = "size-btn"
                 type="button"
                 className={`${buttonClassName} ${scale === "xlarge" ? "active" : ""}`}
                 onClick={() => setScale("xlarge")}
-                title={t("extra_large_text")}
-                aria-label={t("extra_large_text")}
+                aria-label={`A, ${t("extra_large_text")}`}
             >
                 <span className="size-indicator xlarge">A</span>
             </button>

@@ -328,6 +328,9 @@
     background: rgba(255, 255, 255, 0.95);
     border-radius: var(--card-radius);
     cursor: pointer;
+    padding: 0;
+    text-align: left;
+    font: inherit;
     transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
     overflow: hidden;
     display: flex;
