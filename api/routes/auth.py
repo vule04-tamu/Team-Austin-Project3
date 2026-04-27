@@ -1,8 +1,9 @@
 import os
 import jwt
 import time
+import secrets
+import requests as req_lib
 from flask import Blueprint, request, jsonify, redirect
-from google_auth_oauthlib.flow import Flow
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from api.db import get_cursor
@@ -15,36 +16,18 @@ GOOGLE_REDIRECT_URI  = os.environ.get("GOOGLE_REDIRECT_URI")
 FRONTEND_URL         = os.environ.get("FRONTEND_URL", "https://team-austin-project3-two.vercel.app")
 FLASK_SECRET_KEY     = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 
-# Allowed Google manager emails
 ALLOWED_MANAGER_EMAILS = {
     "reveille.bubbletea@gmail.com",
     "derianhung@tamu.edu",
     "vule04@tamu.edu",
 }
 
-os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
+GOOGLE_AUTH_URL  = "https://accounts.google.com/o/oauth2/v2/auth"
+GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
+SCOPES = "openid email profile"
 
-def make_flow(state=None):
-    flow = Flow.from_client_config(
-        {
-            "web": {
-                "client_id": GOOGLE_CLIENT_ID,
-                "client_secret": GOOGLE_CLIENT_SECRET,
-                "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-                "token_uri": "https://oauth2.googleapis.com/token",
-                "redirect_uris": [GOOGLE_REDIRECT_URI],
-            }
-        },
-        scopes=[
-            "openid",
-            "https://www.googleapis.com/auth/userinfo.email",
-            "https://www.googleapis.com/auth/userinfo.profile",
-        ],
-        redirect_uri=GOOGLE_REDIRECT_URI,
-        state=state,
-    )
-    flow.oauth2session.auth = None
-    return flow
+
+# ── Existing username/password login ─────────────────────────────────────────
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
@@ -73,40 +56,75 @@ def login():
 
     return jsonify({"employeeId": employee_id, "username": db_username, "role": role})
 
+
+# ── Google OAuth routes ───────────────────────────────────────────────────────
+
 @auth_bp.route("/google")
 def google_login():
     """Step 1: Redirect browser to Google consent screen."""
-    flow = make_flow()
-    auth_url, state = flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true",
-        prompt="select_account",
+    # Generate a random state and sign it into a JWT
+    # embed it in the redirect so we can verify on callback
+    raw_state = secrets.token_urlsafe(16)
+    signed_state = jwt.encode(
+        {"state": raw_state, "exp": time.time() + 600},
+        FLASK_SECRET_KEY,
+        algorithm="HS256",
     )
-    return redirect(auth_url)
+
+    # Build the Google auth URL manually — no PKCE, no library magic
+    params = (
+        f"?client_id={GOOGLE_CLIENT_ID}"
+        f"&redirect_uri={GOOGLE_REDIRECT_URI}"
+        f"&response_type=code"
+        f"&scope={SCOPES.replace(' ', '%20')}"
+        f"&access_type=offline"
+        f"&prompt=select_account"
+        f"&state={signed_state}"
+    )
+    return redirect(GOOGLE_AUTH_URL + params)
+
 
 @auth_bp.route("/google/callback")
 def google_callback():
-    state = request.args.get("state")
-    if not state:
+    """Step 2: Google redirects here after user approves."""
+    signed_state = request.args.get("state")
+    code         = request.args.get("code")
+
+    if not signed_state or not code:
         return redirect(f"{FRONTEND_URL}/?error=state_missing")
 
+    # Verify the signed state JWT
     try:
-        flow = make_flow(state=state)
-        
-        authorization_response = request.url
-        if authorization_response.startswith("http://"):
-            authorization_response = authorization_response.replace("http://", "https://", 1)
+        jwt.decode(signed_state, FLASK_SECRET_KEY, algorithms=["HS256"])
+    except jwt.ExpiredSignatureError:
+        return redirect(f"{FRONTEND_URL}/?error=state_expired")
+    except Exception:
+        return redirect(f"{FRONTEND_URL}/?error=state_invalid")
 
-        flow.fetch_token(authorization_response=authorization_response)
+    # Exchange the code for tokens manually — no PKCE
+    try:
+        token_response = req_lib.post(
+            GOOGLE_TOKEN_URL,
+            data={
+                "code": code,
+                "client_id": GOOGLE_CLIENT_ID,
+                "client_secret": GOOGLE_CLIENT_SECRET,
+                "redirect_uri": GOOGLE_REDIRECT_URI,
+                "grant_type": "authorization_code",
+            },
+        )
+        token_data = token_response.json()
+        if "error" in token_data:
+            error_msg = str(token_data.get("error_description", token_data["error"])).replace(" ", "_")[:100]
+            return redirect(f"{FRONTEND_URL}/?error={error_msg}")
     except Exception as e:
-        # Send the exact error back
         error_msg = str(e).replace(" ", "_")[:100]
-        return redirect(f"{FRONTEND_URL}/?error={error_msg}")
+        return redirect(f"{FRONTEND_URL}/?error=token_request_failed_{error_msg}")
 
-    credentials = flow.credentials
+    # Verify the ID token
     try:
         id_info = id_token.verify_oauth2_token(
-            credentials.id_token,
+            token_data["id_token"],
             google_requests.Request(),
             GOOGLE_CLIENT_ID,
         )
@@ -120,6 +138,7 @@ def google_callback():
     if email not in ALLOWED_MANAGER_EMAILS:
         return redirect(f"{FRONTEND_URL}/?error=unauthorized_email")
 
+    # Create signed JWT auth token
     auth_token = jwt.encode(
         {
             "email": email,
@@ -133,10 +152,10 @@ def google_callback():
 
     return redirect(f"{FRONTEND_URL}/manager?token={auth_token}")
 
+
 @auth_bp.route("/google/status")
 def google_status():
     """Frontend calls this to check if the manager token is valid."""
-    # Get token from Authorization header instead of cookie
     auth_header = request.headers.get("Authorization", "")
     token = auth_header.replace("Bearer ", "").strip()
 
@@ -159,5 +178,4 @@ def google_status():
 
 @auth_bp.route("/google/logout", methods=["POST"])
 def google_logout():
-    """Frontend just discards the token — nothing to do server side."""
     return jsonify({"ok": True})
