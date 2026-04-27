@@ -19,6 +19,7 @@ FLASK_SECRET_KEY     = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 ALLOWED_MANAGER_EMAILS = {
     "reveille.bubbletea@gmail.com",
     "derianhung@tamu.edu",
+    "vule04@tamu.edu",
 }
 
 def make_flow():
