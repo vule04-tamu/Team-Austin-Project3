@@ -417,16 +417,31 @@ export default function CustomerView() {
         }
     };
 
-    const grouped = useMemo(
-        () =>
-            SECTIONS.map((section) => ({
-                ...section,
-                items: menuItems.filter((item) =>
-                    section.names.includes(item.name),
-                ),
-            })),
-        [menuItems],
-    );
+    const grouped = useMemo(() => {
+        const otherSectionNames = new Set(
+            SECTIONS.filter((section) => section.key !== "specialties")
+                .flatMap((section) => section.names),
+        );
+        const LARGE = " (Large)";
+        const baseNames = new Set(
+            menuItems
+                .filter((item) => item.name.endsWith(LARGE))
+                .map((item) => item.name.slice(0, -LARGE.length)),
+        );
+
+        return SECTIONS.map((section) => ({
+            ...section,
+            items: menuItems.filter((item) => {
+                if (item.name.endsWith(LARGE) && baseNames.has(item.name.slice(0, -LARGE.length))) {
+                    return false;
+                }
+                if (section.key === "specialties") {
+                    return !otherSectionNames.has(item.name);
+                }
+                return section.names.includes(item.name);
+            }),
+        }));
+    }, [menuItems]);
 
     useEffect(() => {
         const tabOk = grouped.some(
