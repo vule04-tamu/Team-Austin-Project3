@@ -25,7 +25,7 @@ ALLOWED_MANAGER_EMAILS = {
 os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
 
 def make_flow(state=None):
-    return Flow.from_client_config(
+    flow = Flow.from_client_config(
         {
             "web": {
                 "client_id": GOOGLE_CLIENT_ID,
@@ -43,6 +43,8 @@ def make_flow(state=None):
         redirect_uri=GOOGLE_REDIRECT_URI,
         state=state,
     )
+    flow.code_verifier = None  # ← disables PKCE code verifier
+    return flow
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
@@ -79,20 +81,9 @@ def google_login():
         access_type="offline",
         include_granted_scopes="true",
         prompt="select_account",
+        code_challenge_method=None,  # ← disables PKCE
     )
-    # Sign the state into a JWT and append it to the auth URL as a custom param
-    # so we can verify it on callback without needing cookies or sessions
-    signed_state = jwt.encode(
-        {"state": state, "exp": time.time() + 600},
-        FLASK_SECRET_KEY,
-        algorithm="HS256",
-    )
-    # Pass signed_state as extra param Google will ignore but echo isn't needed —
-    # instead we embed it directly in the redirect URI as a query param
-    separator = "&" if "?" in auth_url else "?"
-    final_url = f"{auth_url}{separator}nonce={signed_state}"
     return redirect(auth_url)
-
 
 @auth_bp.route("/google/callback")
 def google_callback():
