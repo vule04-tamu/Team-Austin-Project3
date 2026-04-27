@@ -50,6 +50,16 @@ function Login() {
     fetchWeather()
   }, [])
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (err === 'unauthorized_email') setError('Your Google account is not authorized as a manager.')
+    else if (err === 'state_mismatch') setError('Login failed: security check failed. Please try again.')
+    else if (err === 'token_exchange_failed') setError('Google login failed. Please try again.')
+    else if (err === 'invalid_token') setError('Could not verify your Google account.')
+    if (err) window.history.replaceState({}, '', '/')  // clean the ?error= from the URL
+  }, [])
+
   async function handleLogin(e) {
     e.preventDefault()
     setError('')
@@ -58,6 +68,8 @@ function Login() {
       navigate('/customer')
       return
     }
+
+    if (role === 'manager') return
 
     if (!username || !password) {
       setError('Username and password are required.')
@@ -86,8 +98,6 @@ function Login() {
 
       if (role === 'cashier') {
         navigate('/cashier')
-      } else if (role === 'manager') {
-        navigate('/manager')
       }
     } catch {
       setError('Could not reach server.')
@@ -136,7 +146,28 @@ function Login() {
             </div>
 
             <form onSubmit={handleLogin} className="login-form">
-              {role !== 'customer' ? (
+              {role === 'manager' ? (
+                <div className="google-login-section">
+                  <p className="customer-note">
+                    Manager access requires a Google account.<br />
+                    You will be redirected to sign in.
+                  </p>
+                  <button
+                    type="button"
+                    className="login-btn google-btn"
+                    onClick={() => {
+                      window.location.href = `${API_BASE}/api/auth/google`
+                    }}
+                  >
+                    <img
+                      src="https://developers.google.com/identity/images/g-logo.png"
+                      alt="Google"
+                      style={{ width: 20, height: 20, marginRight: 8, verticalAlign: 'middle' }}
+                    />
+                    Sign in with Google
+                  </button>
+                </div>
+              ) : role === 'customer' ? (
                 <>
                   <div className="field">
                     <label htmlFor="username">{t('username')}</label>
@@ -177,10 +208,11 @@ function Login() {
 
               {error && <p className="error-msg">{error}</p>}
 
-              <button className="login-btn" type="submit" disabled={loading}>
-                {loading ? t('signing_in') :
-                  role === 'customer' ? t('continue_as_customer') : t('sign_in')}
-              </button>
+              {role === 'cashier' && (
+                <button className="login-btn" type="submit" disabled={loading}>
+                  {loading ? t('signing_in') : t('sign_in')}
+                </button>
+              )}
             </form>
           </div>
 

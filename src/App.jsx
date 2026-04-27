@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom'
+
 import Login from './Login'
 import Menu from './Menu'
 import './App.css'
@@ -10,6 +11,37 @@ import KioskScreenMagnifier from './KioskScreenMagnifier'
 import { useScreenMagnifier } from './ScreenMagnifierContext'
 import { useTextSize } from './TextSizeControl'
 import { useLanguage } from './LanguageSwitch'
+
+const API_BASE = import.meta.env.VITE_API_URL || ''
+
+function ManagerGuard() {
+  const navigate = useNavigate()
+  const [checking, setChecking] = useState(true)
+  const [authed, setAuthed] = useState(false)
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/auth/google/status`, {
+      credentials: 'include',   // required — sends the session cookie cross-origin
+    })
+      .then(res => {
+        if (res.ok) {
+          setAuthed(true)
+        } else {
+          navigate('/?error=unauthorized_email')
+        }
+      })
+      .catch(() => navigate('/'))
+      .finally(() => setChecking(false))
+  }, [navigate])
+
+  // Show a brief loading state while the session check is in flight
+  if (checking) return <div style={{ padding: 40 }}>Verifying access...</div>
+
+  // If the check failed navigate() already fired, return null to render nothing
+  if (!authed) return null
+
+  return <ManagerView />
+}
 
 function AppRoutes() {
   const location = useLocation()
@@ -53,7 +85,7 @@ function AppRoutes() {
           <Route path="/" element={<Login />} />
           <Route path="/menu" element={<Menu />} />
           <Route path="/cashier" element={<CashierView />}/>
-          <Route path="/manager" element={<ManagerView />}/>
+          <Route path="/manager" element={<ManagerGuard />}/>
           <Route path="/customer" element={<CustomerView />}/>
         </Routes>
       </div>

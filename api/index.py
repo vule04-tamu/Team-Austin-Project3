@@ -15,16 +15,20 @@ from api.routes.weather import weather_bp
 from api.routes.chatbot import chatbot_bp
 
 app = Flask(__name__)
-CORS(app)
 
-app.register_blueprint(auth_bp,      url_prefix="/api/auth")
-app.register_blueprint(menu_bp,      url_prefix="/api/menu")
-app.register_blueprint(orders_bp,    url_prefix="/api/orders")
-app.register_blueprint(inventory_bp, url_prefix="/api/inventory")
-app.register_blueprint(employees_bp, url_prefix="/api/employees")
-app.register_blueprint(zreport_bp,   url_prefix="/api/zreport")
-app.register_blueprint(weather_bp,   url_prefix="/api/weather")
-app.register_blueprint(chatbot_bp,   url_prefix="/api/chatbot")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
+
+# Since frontend and backend are same domain on Vercel, no special CORS needed
+CORS(app, supports_credentials=True)
+
+app.register_blueprint(auth_bp,       url_prefix="/api/auth")
+app.register_blueprint(menu_bp,       url_prefix="/api/menu")
+app.register_blueprint(orders_bp,     url_prefix="/api/orders")
+app.register_blueprint(inventory_bp,  url_prefix="/api/inventory")
+app.register_blueprint(employees_bp,  url_prefix="/api/employees")
+app.register_blueprint(zreport_bp,    url_prefix="/api/zreport")
+app.register_blueprint(weather_bp,    url_prefix="/api/weather")
+app.register_blueprint(chatbot_bp,    url_prefix="/api/chatbot")
 
 @app.route("/api/health")
 def health():
