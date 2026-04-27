@@ -432,6 +432,10 @@ export default function CustomerView() {
         return SECTIONS.map((section) => ({
             ...section,
             items: menuItems.filter((item) => {
+                // Exclude non-drink items like "No Ice", "No Sugar", etc.
+                if (item.name.toLowerCase().includes('ice')) return false;
+                if (item.name.toLowerCase().includes('sugar')) return false;
+
                 if (item.name.endsWith(LARGE) && baseNames.has(item.name.slice(0, -LARGE.length))) {
                     return false;
                 }
