@@ -43,7 +43,7 @@ def make_flow(state=None):
         redirect_uri=GOOGLE_REDIRECT_URI,
         state=state,
     )
-    flow.code_verifier = None  # ← disables PKCE code verifier
+    flow.oauth2session.auth = None
     return flow
 
 @auth_bp.route("/login", methods=["POST"])
@@ -81,7 +81,6 @@ def google_login():
         access_type="offline",
         include_granted_scopes="true",
         prompt="select_account",
-        code_challenge_method=None,  # ← disables PKCE
     )
     return redirect(auth_url)
 
@@ -100,7 +99,7 @@ def google_callback():
 
         flow.fetch_token(authorization_response=authorization_response)
     except Exception as e:
-        # Send the exact error back so we can see it
+        # Send the exact error back
         error_msg = str(e).replace(" ", "_")[:100]
         return redirect(f"{FRONTEND_URL}/?error={error_msg}")
 
