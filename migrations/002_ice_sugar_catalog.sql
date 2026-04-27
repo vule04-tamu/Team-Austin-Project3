@@ -17,7 +17,8 @@ VALUES
     ('Sugar Level', '25%', 0.00, NULL, 1.0),
     ('Sugar Level', '50%', 0.00, NULL, 1.0),
     ('Sugar Level', '75%', 0.00, NULL, 1.0),
-    ('Sugar Level', '100%', 0.00, NULL, 1.0);
+    ('Sugar Level', '100%', 0.00, NULL, 1.0),
+    ('Sugar Level', '125%', 0.00, NULL, 1.0);
 
 -- Remove Matcha Dreamcicle from customization_options
 DELETE FROM customization_options

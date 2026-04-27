@@ -32,6 +32,34 @@ def list_customizations():
         for row in rows
     ]
 
+    if not any(
+        row["category"] == "Sugar Level" and row["name"] == "125%"
+        for row in rows
+    ):
+        try:
+            with get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute(
+                    "INSERT INTO customization_options (category, name, price_modifier, inventory_item_id, inventory_use_qty) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                    ("Sugar Level", "125%", 0.0, None, 1.0),
+                )
+                new_id = cur.fetchone()[0]
+                rows.append({
+                    "id": new_id,
+                    "category": "Sugar Level",
+                    "name": "125%",
+                    "priceModifier": 0.0,
+                    "inventoryItemId": None,
+                })
+        except Exception:
+            rows.append({
+                "id": None,
+                "category": "Sugar Level",
+                "name": "125%",
+                "priceModifier": 0.0,
+                "inventoryItemId": None,
+            })
+
     return jsonify(
         localize_entity_rows(
             rows,

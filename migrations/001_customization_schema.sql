@@ -90,6 +90,7 @@ FROM (VALUES
     ('Sugar Level', '50%', 0.00::numeric),
     ('Sugar Level', '75%', 0.00::numeric),
     ('Sugar Level', '100%', 0.00::numeric),
+    ('Sugar Level', '125%', 0.00::numeric),
     ('Toppings', 'Boba Pearls', 0.50::numeric),
     ('Toppings', 'Lychee Jelly', 0.50::numeric)
 ) AS v(category, name, price)
