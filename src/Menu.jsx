@@ -275,9 +275,9 @@ export default function Menu() {
                     <div key={item.id} className="menu-board-item">
                       <div className="item-main">
                         <p className="item-name">{displayMenuItemName(item)}</p>
-                        {item.customizable && (
+                        {/* {item.customizable && (
                           <span className="item-badge">{t('custom_badge')}</span>
-                        )}
+                        )} */}
                       </div>
                       <div className="item-footer">
                         {lg ? (
