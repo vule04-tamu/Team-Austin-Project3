@@ -479,10 +479,11 @@ export default function CustomerView() {
         return (
             <div className="kiosk-root">
                 {a11yChrome}
-                <div
+                <main
                     ref={contrastLayerRef}
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
+                    aria-label={t("menu")}
                 >
                     <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-loading">
@@ -490,7 +491,7 @@ export default function CustomerView() {
                             <span>{t("loading_menu")}</span>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -499,17 +500,18 @@ export default function CustomerView() {
         return (
             <div className="kiosk-root">
                 {a11yChrome}
-                <div
+                <main
                     ref={contrastLayerRef}
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
+                    aria-label={t("menu")}
                 >
                     <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-loading" style={{ color: "#ff6b9d" }}>
                             {error}
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -518,10 +520,11 @@ export default function CustomerView() {
         return (
             <div className="kiosk-root">
                 {a11yChrome}
-                <div
+                <main
                     ref={contrastLayerRef}
                     className="kiosk-contrast-layer"
                     style={contrastStyle}
+                    aria-label={t("order_placed")}
                 >
                     <div className="kiosk-contrast-mag-inner">
                         <div className="kiosk-success">
@@ -543,7 +546,7 @@ export default function CustomerView() {
                             </button>
                         </div>
                     </div>
-                </div>
+                </main>
             </div>
         );
     }
@@ -572,19 +575,20 @@ export default function CustomerView() {
 
             {a11yChrome}
 
-            <div
+            <main
                 ref={contrastLayerRef}
                 className="kiosk-contrast-layer"
                 style={contrastStyle}
+                aria-labelledby="kiosk-welcome-heading"
             >
             <div className="kiosk-contrast-mag-inner">
-            <div className="kiosk-hero kiosk-hero-compact">
-                <h1>{t('welcome')}</h1>
+            <section className="kiosk-hero kiosk-hero-compact" aria-labelledby="kiosk-welcome-heading">
+                <h1 id="kiosk-welcome-heading">{t('welcome')}</h1>
                 <p>{t('pick_category')}</p>
-            </div>
+            </section>
 
             <div className="kiosk-body">
-                <div className="kiosk-menu-column">
+                <section className="kiosk-menu-column" aria-label={t("menu")}>
                     <div className="kiosk-menu-tabs" role="tablist" aria-label={t("menu_categories")}>
                         {grouped.map((section) => {
                             if (section.items.length === 0) return null;
@@ -672,7 +676,7 @@ export default function CustomerView() {
                             <p className="kiosk-tab-empty">{t('no_drinks_cat')}</p>
                         )}
                     </div>
-                </div>
+                </section>
 
                 <aside className="kiosk-cart">
                     <div className="kiosk-cart-header">
@@ -935,7 +939,7 @@ export default function CustomerView() {
             )}
 
             {toast && <div className="kiosk-toast">{toast}</div>}
-            </div>
+            </main>
         </div>
     );
 }
