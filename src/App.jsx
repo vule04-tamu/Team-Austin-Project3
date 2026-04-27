@@ -20,13 +20,34 @@ function ManagerGuard() {
   const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
+    // Check if Google just redirected here with a token in the URL
+    const params = new URLSearchParams(window.location.search)
+    const urlToken = params.get('token')
+
+    if (urlToken) {
+      // Store token in sessionStorage and clean the URL
+      sessionStorage.setItem('manager_token', urlToken)
+      window.history.replaceState({}, '', '/manager')
+    }
+
+    const token = urlToken || sessionStorage.getItem('manager_token')
+
+    if (!token) {
+      navigate('/')
+      setChecking(false)
+      return
+    }
+
+    // Verify token with backend
     fetch(`${API_BASE}/api/auth/google/status`, {
-      credentials: 'include',   // required — sends the session cookie cross-origin
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     })
       .then(res => {
-        if (res.ok) {
-          setAuthed(true)
-        } else {
+        if (res.ok) setAuthed(true)
+        else {
+          sessionStorage.removeItem('manager_token')
           navigate('/?error=unauthorized_email')
         }
       })
@@ -34,12 +55,8 @@ function ManagerGuard() {
       .finally(() => setChecking(false))
   }, [navigate])
 
-  // Show a brief loading state while the session check is in flight
   if (checking) return <div style={{ padding: 40 }}>Verifying access...</div>
-
-  // If the check failed navigate() already fired, return null to render nothing
   if (!authed) return null
-
   return <ManagerView />
 }
 

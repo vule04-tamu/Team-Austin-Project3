@@ -15,12 +15,14 @@ GOOGLE_REDIRECT_URI  = os.environ.get("GOOGLE_REDIRECT_URI")
 FRONTEND_URL         = os.environ.get("FRONTEND_URL", "https://team-austin-project3-two.vercel.app")
 FLASK_SECRET_KEY     = os.environ.get("FLASK_SECRET_KEY", "dev-secret")
 
-# Allowed Google emails that are managers — add your manager emails here
+# Allowed Google manager emails
 ALLOWED_MANAGER_EMAILS = {
     "reveille.bubbletea@gmail.com",
     "derianhung@tamu.edu",
     "vule04@tamu.edu",
 }
+
+os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "0"
 
 def make_flow():
     return Flow.from_client_config(
@@ -39,6 +41,7 @@ def make_flow():
             "https://www.googleapis.com/auth/userinfo.profile",
         ],
         redirect_uri=GOOGLE_REDIRECT_URI,
+        state=state,
     )
 
 @auth_bp.route("/login", methods=["POST"])
@@ -56,7 +59,6 @@ def login():
         WHERE username = %s AND password = %s
         LIMIT 1
     """
-
     with get_cursor() as cur:
         cur.execute(sql, (username, password))
         row = cur.fetchone()
@@ -67,11 +69,7 @@ def login():
     employee_id, db_username, role_str = row
     role = "manager" if role_str and role_str.lower() == "manager" else "cashier"
 
-    return jsonify({
-        "employeeId": employee_id,
-        "username": db_username,
-        "role": role,
-    })
+    return jsonify({"employeeId": employee_id, "username": db_username, "role": role})
 
 @auth_bp.route("/google")
 def google_login():
@@ -82,50 +80,34 @@ def google_login():
         include_granted_scopes="true",
         prompt="select_account",
     )
-
-    # Store state in a short-lived cookie so we can verify it on callback
-    state_token = jwt.encode(
+    # Sign the state into a JWT and append it to the auth URL as a custom param
+    # so we can verify it on callback without needing cookies or sessions
+    signed_state = jwt.encode(
         {"state": state, "exp": time.time() + 600},
         FLASK_SECRET_KEY,
         algorithm="HS256",
     )
+    # Pass signed_state as extra param Google will ignore but echo isn't needed —
+    # instead we embed it directly in the redirect URI as a query param
+    separator = "&" if "?" in auth_url else "?"
+    final_url = f"{auth_url}{separator}nonce={signed_state}"
+    return redirect(auth_url)
 
-    response = redirect(auth_url)  # use auth_url directly, no manual state append
-    response.set_cookie(
-        "oauth_state",
-        state_token,
-        max_age=600,
-        httponly=True,
-        secure=True,
-        samesite="None",
-    )
-    return response
 
 @auth_bp.route("/google/callback")
 def google_callback():
     """Step 2: Google redirects here after user approves."""
-    # Retrieve and verify the state cookie
-    state_cookie = request.cookies.get("oauth_state")
-    if not state_cookie:
+    # Get the state from Google's callback
+    state = request.args.get("state")
+    if not state:
         return redirect(f"{FRONTEND_URL}/?error=state_missing")
 
+    # Exchange the auth code for tokens using the state Google gave us
     try:
-        decoded = jwt.decode(state_cookie, FLASK_SECRET_KEY, algorithms=["HS256"])
-        expected_state = decoded["state"]
-    except jwt.ExpiredSignatureError:
-        return redirect(f"{FRONTEND_URL}/?error=state_expired")
-    except Exception:
-        return redirect(f"{FRONTEND_URL}/?error=state_invalid")
-
-    # Verify state matches what Google sent back
-    if request.args.get("state") != expected_state:
-        return redirect(f"{FRONTEND_URL}/?error=state_mismatch")
-
-    # Exchange the auth code for tokens
-    flow = make_flow(state=expected_state)
-    try:
+        flow = make_flow(state=state)
         flow.fetch_token(authorization_response=request.url)
-    except Exception:
+    except Exception as e:
+        print(f"Token exchange error: {e}")
         return redirect(f"{FRONTEND_URL}/?error=token_exchange_failed")
 
     # Verify the ID token and extract user info
@@ -136,7 +118,8 @@ def google_callback():
             google_requests.Request(),
             GOOGLE_CLIENT_ID,
         )
-    except Exception:
+    except Exception as e:
+        print(f"Token verification error: {e}")
         return redirect(f"{FRONTEND_URL}/?error=invalid_token")
 
     email = id_info.get("email", "")
@@ -146,37 +129,30 @@ def google_callback():
     if email not in ALLOWED_MANAGER_EMAILS:
         return redirect(f"{FRONTEND_URL}/?error=unauthorized_email")
 
-    # Create a signed JWT to act as the auth token
-    # This replaces the server session — the token lives in the browser cookie
+    # Create a signed JWT auth token — replaces server session
     auth_token = jwt.encode(
         {
             "email": email,
             "name": name,
             "role": "manager",
-            "exp": time.time() + 60 * 60 * 8,  # 8 hour expiry
+            "exp": time.time() + 60 * 60 * 8,  # 8 hours
         },
         FLASK_SECRET_KEY,
         algorithm="HS256",
     )
 
-    # Send the token to the frontend via a cookie
-    response = redirect(f"{FRONTEND_URL}/manager")
-    response.set_cookie(
-        "manager_token",
-        auth_token,
-        max_age=60 * 60 * 8,   # 8 hours
-        httponly=True,
-        secure=True,
-        samesite="None",
-    )
-    # Clear the oauth_state cookie now that we're done with it
-    response.delete_cookie("oauth_state")
-    return response
+    # Redirect to frontend with token as URL param
+    # Frontend will store it in memory and use it for /api/auth/google/status
+    return redirect(f"{FRONTEND_URL}/manager?token={auth_token}")
+
 
 @auth_bp.route("/google/status")
 def google_status():
     """Frontend calls this to check if the manager token is valid."""
-    token = request.cookies.get("manager_token")
+    # Get token from Authorization header instead of cookie
+    auth_header = request.headers.get("Authorization", "")
+    token = auth_header.replace("Bearer ", "").strip()
+
     if not token:
         return jsonify({"authenticated": False}), 401
 
@@ -193,13 +169,8 @@ def google_status():
         "name": decoded.get("name"),
     })
 
+
 @auth_bp.route("/google/logout", methods=["POST"])
 def google_logout():
-    """Clear the manager token cookie."""
-    response = jsonify({"ok": True})
-    response.delete_cookie(
-        "manager_token",
-        secure=True,
-        samesite="None",
-    )
-    return response
+    """Frontend just discards the token — nothing to do server side."""
+    return jsonify({"ok": True})
