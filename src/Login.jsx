@@ -55,7 +55,7 @@ function Login() {
     const err = params.get('error')
     if (err === 'unauthorized_email') setError('Your Google account is not authorized as a manager.')
     else if (err === 'state_mismatch') setError('Login failed: security check failed. Please try again.')
-    else if (err === 'token_exchange_failed') setError('Google login failed. Please try again.')
+    else if (err) setError(`Login error: ${err}`)
     else if (err === 'invalid_token') setError('Could not verify your Google account.')
     if (err) window.history.replaceState({}, '', '/')  // clean the ?error= from the URL
   }, [])

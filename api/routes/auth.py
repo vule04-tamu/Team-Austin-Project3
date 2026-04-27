@@ -96,26 +96,23 @@ def google_login():
 
 @auth_bp.route("/google/callback")
 def google_callback():
-    """Step 2: Google redirects here after user approves."""
-    # Get the state from Google's callback
     state = request.args.get("state")
     if not state:
         return redirect(f"{FRONTEND_URL}/?error=state_missing")
 
-    # Exchange the auth code for tokens using the state Google gave us
     try:
         flow = make_flow(state=state)
-
+        
         authorization_response = request.url
         if authorization_response.startswith("http://"):
             authorization_response = authorization_response.replace("http://", "https://", 1)
 
         flow.fetch_token(authorization_response=authorization_response)
     except Exception as e:
-        print(f"Token exchange error: {e}")
-        return redirect(f"{FRONTEND_URL}/?error=token_exchange_failed")
+        # Send the exact error back so we can see it
+        error_msg = str(e).replace(" ", "_")[:100]
+        return redirect(f"{FRONTEND_URL}/?error={error_msg}")
 
-    # Verify the ID token and extract user info
     credentials = flow.credentials
     try:
         id_info = id_token.verify_oauth2_token(
@@ -124,32 +121,27 @@ def google_callback():
             GOOGLE_CLIENT_ID,
         )
     except Exception as e:
-        print(f"Token verification error: {e}")
-        return redirect(f"{FRONTEND_URL}/?error=invalid_token")
+        error_msg = str(e).replace(" ", "_")[:100]
+        return redirect(f"{FRONTEND_URL}/?error=token_verify_{error_msg}")
 
     email = id_info.get("email", "")
     name  = id_info.get("name", email)
 
-    # Check this email is an allowed manager
     if email not in ALLOWED_MANAGER_EMAILS:
         return redirect(f"{FRONTEND_URL}/?error=unauthorized_email")
 
-    # Create a signed JWT auth token — replaces server session
     auth_token = jwt.encode(
         {
             "email": email,
             "name": name,
             "role": "manager",
-            "exp": time.time() + 60 * 60 * 8,  # 8 hours
+            "exp": time.time() + 60 * 60 * 8,
         },
         FLASK_SECRET_KEY,
         algorithm="HS256",
     )
 
-    # Redirect to frontend with token as URL param
-    # Frontend will store it in memory and use it for /api/auth/google/status
     return redirect(f"{FRONTEND_URL}/manager?token={auth_token}")
-
 
 @auth_bp.route("/google/status")
 def google_status():
