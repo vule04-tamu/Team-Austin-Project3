@@ -105,7 +105,12 @@ def google_callback():
     # Exchange the auth code for tokens using the state Google gave us
     try:
         flow = make_flow(state=state)
-        flow.fetch_token(authorization_response=request.url)
+
+        authorization_response = request.url
+        if authorization_response.startswith("http://"):
+            authorization_response = authorization_response.replace("http://", "https://", 1)
+
+        flow.fetch_token(authorization_response=authorization_response)
     except Exception as e:
         print(f"Token exchange error: {e}")
         return redirect(f"{FRONTEND_URL}/?error=token_exchange_failed")
