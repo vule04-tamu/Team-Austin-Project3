@@ -159,6 +159,9 @@ export default function Menu() {
     );
 
     for (const item of regularMenuItems) {
+      // Exclude non-drink items like "No Ice", "No Sugar", etc.
+      if (item.name.toLowerCase().includes('ice')) continue;
+      if (item.name.toLowerCase().includes('sugar')) continue;
       const sectionKey = classifyDrinkSection(item.name);
       if (sectionKey === TOPPINGS_SECTION.key) continue;
       itemsBySection.get(sectionKey)?.push(item);
