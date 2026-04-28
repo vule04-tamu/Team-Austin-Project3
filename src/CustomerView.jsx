@@ -54,7 +54,7 @@ const SECTIONS = [
         labelKey: "sec_hot_drinks",
         tabKey: "sec_hot_drinks_tab",
         gradient: "#ff9f1c, #ef476f",
-        names: ["Hot Classic Milk Tea", "Hot Honey Lemon Tea", "Hot Matcha Latte"],
+        names: ["Hot Classic Milk Tea", "Hot Honey Lemon Tea", "Hot Matcha Latte", "Hot Coffee"],
     },
     {
         key: "specialties",
@@ -607,16 +607,6 @@ export default function CustomerView() {
                         <div className="kiosk-brand-name">{t('shop_name')}</div>
                         <div className="kiosk-brand-sub">{t('order_here')}</div>
                     </div>
-                </div>
-                <div className="kiosk-header-right">
-                    <button
-                        type="button"
-                        className="kiosk-cart-btn"
-                        onClick={() => cart.length > 0 ? setShowPayModal(true) : showToast(t('add_something_first'))}
-                    >
-                        {t('view_cart')}
-                        {totalItems > 0 && <span className="cart-badge">{totalItems}</span>}
-                    </button>
                 </div>
             </header>
 

@@ -31,7 +31,7 @@ const DRINK_SECTIONS = [
     key: "hot-drinks",
     labelKey: "sec_hot_drinks",
     className: "section-sec_hot_drinks",
-    preferredNames: ["Hot Classic Milk Tea", "Hot Honey Lemon Tea", "Hot Matcha Latte"]
+    preferredNames: ["Hot Classic Milk Tea", "Hot Honey Lemon Tea", "Hot Matcha Latte", "Hot Coffee"]
   },
   {
     key: "specialties",

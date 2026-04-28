@@ -17,7 +17,7 @@ MILK TEAS: Classic Milk Tea, Jasmine Green Milk Tea, Taro Milk Tea, Thai Milk Te
 
 FRUIT TEAS: Mango Green Tea, Passion Fruit Tea, Lychee Green Tea, Peach Oolong Tea, Wintermelon Tea, Honey Lemon Tea, Mint Tea
 
-HOT DRINKS: Hot Classic Milk Tea, Hot Honey Lemon Tea, Hot Matcha Latte
+HOT DRINKS: Hot Classic Milk Tea, Hot Honey Lemon Tea, Hot Matcha Latte, Hot Coffee
 
 SPECIALTIES: Matcha Latte, Jayden Special, Fresh Milk
 
