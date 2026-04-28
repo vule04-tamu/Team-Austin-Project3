@@ -28,6 +28,12 @@ const DRINK_SECTIONS = [
     ]
   },
   {
+    key: "hot-drinks",
+    labelKey: "sec_hot_drinks",
+    className: "section-sec_hot_drinks",
+    preferredNames: ["Hot Classic Milk Tea", "Hot Honey Lemon Tea", "Hot Matcha Latte"]
+  },
+  {
     key: "specialties",
     labelKey: "sec_specialties",
     className: "section-sec_specialties",
@@ -90,6 +96,7 @@ const classifyDrinkSection = (name = "") => {
   }
 
   const lower = name.toLowerCase();
+  if (lower.startsWith("hot ")) return "hot-drinks";
   if (lower.includes("milk tea")) return "milk-teas";
   if (lower.includes("tea")) return "fruit-teas";
   return "specialties";

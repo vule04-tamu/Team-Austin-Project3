@@ -50,6 +50,13 @@ const SECTIONS = [
         ],
     },
     {
+        key: "hot-drinks",
+        labelKey: "sec_hot_drinks",
+        tabKey: "sec_hot_drinks_tab",
+        gradient: "#ff9f1c, #ef476f",
+        names: ["Hot Classic Milk Tea", "Hot Honey Lemon Tea", "Hot Matcha Latte"],
+    },
+    {
         key: "specialties",
         labelKey: "sec_specialties",
         tabKey: "sec_specialties_tab",
@@ -259,7 +266,7 @@ export default function CustomerView() {
     }, [getDisplayMenuName, showToast, t]);
 
     const handleSurpriseMe = useCallback(() => {
-        const drinkSectionKeys = ["milk-teas", "fruit-teas", "specialties"];
+        const drinkSectionKeys = ["milk-teas", "fruit-teas", "hot-drinks", "specialties"];
         const drinkItems = menuItems.filter((item) =>
             SECTIONS.some(
                 (s) => drinkSectionKeys.includes(s.key) && s.names.includes(item.name)
