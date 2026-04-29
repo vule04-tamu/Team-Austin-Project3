@@ -37,19 +37,21 @@ function findOption(options, category, nameLower) {
 }
 
 /** Default ice + sugar when opening customize modal (IDs from catalog). */
-export function defaultCustomizationSelection(options) {
-    const ice = findOption(options, "Ice Level", "regular ice");
-    const sugar = findOption(options, "Sugar Level", "100%");
+export function defaultCustomizationSelection(options, { includeIce = true } = {}) {
     const ids = [];
-    if (ice) ids.push(ice.id);
+    if (includeIce) {
+        const ice = findOption(options, "Ice Level", "regular ice");
+        if (ice) ids.push(ice.id);
+    }
+    const sugar = findOption(options, "Sugar Level", "100%");
     if (sugar) ids.push(sugar.id);
     return ids;
 }
 
 /** Ensure one ice and one sugar if catalog defines those categories. */
-export function ensureIceSugarDefaults(ids, options) {
+export function ensureIceSugarDefaults(ids, options, { includeIce = true } = {}) {
     let next = [...ids];
-    for (const category of ["Ice Level", "Sugar Level"]) {
+    for (const category of includeIce ? ["Ice Level", "Sugar Level"] : ["Sugar Level"]) {
         const inCat = options.filter((o) => o.category === category);
         if (inCat.length === 0) continue;
         const has = next.some((id) => inCat.some((o) => o.id === id));

@@ -65,6 +65,10 @@ const SECTIONS = [
     },
 ];
 
+const HOT_DRINK_NAMES = new Set(
+    SECTIONS.find((section) => section.key === "hot-drinks")?.names || [],
+);
+
 function newLineId() {
     return crypto.randomUUID();
 }
@@ -89,6 +93,9 @@ export default function CustomerView() {
     const [pendingCustomIds, setPendingCustomIds] = useState([]);
     const [pendingSize, setPendingSize] = useState("regular");
     const [menuTab, setMenuTab] = useState(SECTIONS[0].key);
+
+    const isHotDrink = useCallback((item) => HOT_DRINK_NAMES.has(item.name), []);
+    const shouldIncludeIce = useCallback((item) => !HOT_DRINK_NAMES.has(item.name), []);
 
     const contrastLayerRef = useRef(null);
     const [contrastPct, setContrastPct] = useState(100);
@@ -298,7 +305,9 @@ export default function CustomerView() {
                     customIds.push(...shuffled.slice(0, count).map((o) => o.id));
                 }
             }
-            customIds = ensureIceSugarDefaults(customIds, customizationOptions);
+            customIds = ensureIceSugarDefaults(customIds, customizationOptions, {
+                includeIce: shouldIncludeIce(item),
+            });
         }
 
         pushLine(actualItem, customIds, true);
@@ -316,7 +325,9 @@ export default function CustomerView() {
             setPendingSize("regular");
             setPendingCustomIds(
                 item.customizable
-                    ? defaultCustomizationSelection(customizationOptions)
+                    ? defaultCustomizationSelection(customizationOptions, {
+                          includeIce: shouldIncludeIce(item),
+                      })
                     : [],
             );
             return;
@@ -327,7 +338,9 @@ export default function CustomerView() {
     const confirmCustomize = () => {
         if (!customizeModal) return;
         const ids = customizeModal.item.customizable
-            ? ensureIceSugarDefaults(pendingCustomIds, customizationOptions)
+            ? ensureIceSugarDefaults(pendingCustomIds, customizationOptions, {
+                  includeIce: shouldIncludeIce(customizeModal.item),
+              })
             : pendingCustomIds;
         const actualItem =
             pendingSize === "large" && customizeModal.variants?.large
@@ -498,6 +511,9 @@ export default function CustomerView() {
     }, [customizeModal]);
 
     const cupIceLevel = useMemo(() => {
+        if (customizeModal && !shouldIncludeIce(customizeModal.item)) {
+            return "No Ice";
+        }
         for (const [cat, opts] of optionsByCategory.entries()) {
             if (cat.toLowerCase().includes("ice")) {
                 const selected = opts.find((o) => pendingCustomIds.includes(o.id));
@@ -505,7 +521,7 @@ export default function CustomerView() {
             }
         }
         return "Regular Ice";
-    }, [optionsByCategory, pendingCustomIds]);
+    }, [optionsByCategory, pendingCustomIds, customizeModal, shouldIncludeIce]);
 
     const cupToppingIds = useMemo(() => {
         for (const [cat, opts] of optionsByCategory.entries()) {
@@ -846,7 +862,9 @@ export default function CustomerView() {
                             <p className="kiosk-modal-label">
                                 {customizeModal.variants ? t('pick_size') : ""}
                                 {customizeModal.variants && customizeModal.item.customizable ? " · " : ""}
-                                {customizeModal.item.customizable ? t('ice_sugar_hint') : ""}
+                                {customizeModal.item.customizable && shouldIncludeIce(customizeModal.item)
+                                    ? t('ice_sugar_hint')
+                                    : ""}
                             </p>
                             <div className="kiosk-customize-scroll">
                                 {customizeModal.variants && (
@@ -881,7 +899,9 @@ export default function CustomerView() {
                                         </div>
                                     </div>
                                 )}
-                                {customizeModal.item.customizable && [...optionsByCategory.entries()].map(([cat, opts]) => (
+                                {customizeModal.item.customizable && [...optionsByCategory.entries()]
+                                    .filter(([cat]) => shouldIncludeIce(customizeModal.item) || cat !== "Ice Level")
+                                    .map(([cat, opts]) => (
                                     <div key={cat} className="kiosk-customize-block">
                                         <div className="kiosk-customize-cat">
                                             {getDisplayCustomizationCategory(cat)}
